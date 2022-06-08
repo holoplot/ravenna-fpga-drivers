@@ -3,9 +3,6 @@
 #ifndef RA_SD_RX_H
 #define RA_SD_RX_H
 
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-
 #include "stream-table-rx.h"
 #include "track-table.h"
 

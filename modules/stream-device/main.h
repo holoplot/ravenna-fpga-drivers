@@ -5,7 +5,6 @@
 
 #include <linux/io.h>
 #include <linux/miscdevice.h>
-#include <linux/module.h>
 
 #include <uapi/ravenna/stream-device.h>
 

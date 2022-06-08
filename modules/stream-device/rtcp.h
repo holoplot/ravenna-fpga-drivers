@@ -3,10 +3,7 @@
 #ifndef RA_SD_RTCP_H
 #define RA_SD_RTCP_H
 
-#include <linux/miscdevice.h>
 #include <linux/module.h>
-
-struct ra_sd_priv;
 
 struct ra_sd_rtcp_rx_data_fpga {
 #ifdef __LITTLE_ENDIAN
@@ -79,6 +76,8 @@ struct ra_sd_rtcp_tx_data_fpga {
 	u32 sec_sent_pkts;			/* DATA_3 */
 	u32 sec_sent_rtp_bytes;			/* DATA_4 */
 } __packed;
+
+struct ra_sd_priv;
 
 void ra_sd_rtcp_rx_irq(struct ra_sd_priv *priv);
 void ra_sd_rtcp_tx_irq(struct ra_sd_priv *priv);

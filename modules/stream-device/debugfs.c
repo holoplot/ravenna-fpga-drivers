@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include <linux/clk.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
-#include <linux/of.h>
 
 #include <ravenna/version.h>
 
@@ -272,7 +270,7 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 			   st->sync_source		? "SYNC-SOURCE " : "",
 			   st->vlan_tagged		? "VLAN-TAGGED " : "",
 			   st->hitless_protection	? "HITLESS " 	 : "",
-			   st->synchronous		? "SYNCHRONOUS "	 :
+			   st->synchronous		? "SYNCHRONOUS " :
 							  "SYNTONOUS ");
 
 		seq_printf(s, "  Track table entry: %d\n", e->trtb_index);

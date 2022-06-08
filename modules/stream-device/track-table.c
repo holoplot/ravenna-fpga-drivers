@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include <linux/of_platform.h>
+#include <linux/device.h>
 #include <linux/of_address.h>
 
 #include "track-table.h"
