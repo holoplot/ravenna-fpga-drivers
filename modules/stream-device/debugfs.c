@@ -46,10 +46,10 @@ void ra_sd_track_table_dump(struct ra_track_table *trtb, struct seq_file *s)
 	const int width = 16;
 	int i;
 
-	seq_puts(s, "         ");
+	seq_puts(s, "          ");
 
 	for (i = 0; i < width; i++)
-		seq_printf(s, "  0x%02x", i);
+		seq_printf(s, " 0x%02x", i);
 
 	seq_puts(s, "\n");
 	seq_puts(s, "---------");
@@ -67,9 +67,9 @@ void ra_sd_track_table_dump(struct ra_track_table *trtb, struct seq_file *s)
 
 
 		if (test_bit(i, trtb->used_entries))
-			seq_printf(s, " 0x%02x ", track);
+			seq_printf(s, " %3d ", track);
 		else
-			seq_puts(s, "  -   ");
+			seq_puts(s, "  -  ");
 
 		if (i % width == width-1)
 			seq_puts(s, "\n");
