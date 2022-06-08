@@ -154,6 +154,7 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 {
 	struct ra_sd_update_rx_stream_cmd cmd;
 	struct ra_sd_rx_stream_elem *e;
+	bool invalidate = false;
 	int ret;
 
 	if (size != sizeof(cmd))
@@ -229,13 +230,20 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 		e->trtb_index = ret;
 	}
 
+	/* We need to flush the previous hash table entry in case the IP/port changes */
+	if (e->stream.primary.destination_ip     != cmd.stream.primary.destination_ip     ||
+	    e->stream.primary.destination_port   != cmd.stream.primary.destination_port   ||
+	    e->stream.secondary.destination_ip   != cmd.stream.secondary.destination_ip   ||
+	    e->stream.secondary.destination_port != cmd.stream.secondary.destination_port)
+		invalidate = true;
+
 	memcpy(&e->stream, &cmd.stream, sizeof(e->stream));
 
 	ra_sd_rx_tracks_alloc(rx, &e->stream);
 	ra_track_table_set(&rx->trtb, e->trtb_index,
 			   e->stream.num_channels, e->stream.tracks);
 	ra_stream_table_rx_set(&rx->sttb, &e->stream, cmd.index,
-			       e->trtb_index, false);
+			       e->trtb_index, invalidate);
 
 out_unlock:
 	mutex_unlock(&rx->mutex);
