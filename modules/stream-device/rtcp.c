@@ -92,14 +92,20 @@ int ra_sd_read_rtcp_rx_stat_ioctl(struct ra_sd_priv *priv,
 	mutex_lock(&priv->rtcp_rx.mutex);
 
 	WRITE_ONCE(priv->rtcp_rx.ready, false);
-
 	ra_sd_iow(priv, RA_SD_RX_PAGE_SELECT, cmd.index);
 
 	ret = wait_event_interruptible_timeout(priv->rtcp_rx.wait,
 					       priv->rtcp_rx.ready,
 					       msecs_to_jiffies(cmd.timeout_ms));
+	if (ret == 0)
+		ret = -ETIMEDOUT;
+
 	if (ret < 0)
 		goto out_unlock;
+
+	/* Report elapsed time back to userspace */
+	cmd.timeout_ms -= jiffies_to_msecs(ret);
+	ret = 0;
 
 	ra_sd_parse_rtcp_rx_data(&priv->rtcp_rx.data, &cmd.data);
 
@@ -131,14 +137,20 @@ int ra_sd_read_rtcp_tx_stat_ioctl(struct ra_sd_priv *priv,
 	mutex_lock(&priv->rtcp_tx.mutex);
 
 	WRITE_ONCE(priv->rtcp_tx.ready, false);
-
 	ra_sd_iow(priv, RA_SD_RX_PAGE_SELECT, cmd.index);
 
 	ret = wait_event_interruptible_timeout(priv->rtcp_tx.wait,
 					       priv->rtcp_tx.ready,
 					       msecs_to_jiffies(cmd.timeout_ms));
+	if (ret == 0)
+		ret = -ETIMEDOUT;
+
 	if (ret < 0)
 		goto out_unlock;
+
+	/* Report elapsed time back to userspace */
+	cmd.timeout_ms -= jiffies_to_msecs(ret);
+	ret = 0;
 
 	ra_sd_parse_rtcp_tx_data(&priv->rtcp_tx.data, &cmd.data);
 
