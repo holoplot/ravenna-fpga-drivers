@@ -124,6 +124,7 @@ struct ra_sd_tx_stream {
 		__be16 destination_port;
 		__be16 source_port;
 		__be16 vlan_tag;
+		__u8 vlan_tagged:1;
 		__u8 destination_mac[6];
 	} primary, secondary;
 

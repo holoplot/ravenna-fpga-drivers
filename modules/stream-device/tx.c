@@ -14,26 +14,63 @@ ra_sd_tx_stream_elem_find_by_index(struct ra_sd_tx *tx, int index)
 	return xa_is_err(e) ? NULL : e;
 }
 
-static int ra_sd_tx_validate_stream(struct ra_sd_tx_stream *stream)
+static int
+ra_sd_rx_validate_stream_interface(const struct ra_sd_tx_stream_interface *iface)
 {
-	int i;
+	if (iface->destination_ip == 0		||
+	    iface->destination_port == 0	||
+	    iface->source_ip == 0 		||
+	    iface->source_port == 0)
+		return -EINVAL;
+
+	/* RFC 3550 */
+	if (iface->destination_port > 0 &&
+	    iface->destination_port < 1024)
+		return -EINVAL;
+
+	if (iface->vlan_tagged && be16_to_cpu(iface->vlan_tag) > 4095)
+		return -EINVAL;
+
+	return 0;
+}
+
+static int ra_sd_tx_validate_stream(const struct ra_sd_tx_stream *stream)
+{
+	int i, ret;
 
 	if (!stream->use_primary &&
 	    !stream->use_secondary)
 		return -EINVAL;
 
-	if (stream->use_primary &&
-	    (stream->primary.destination_ip == 0	||
-	     stream->primary.destination_port == 0	||
-	     stream->primary.source_ip == 0 		||
-	     stream->primary.source_port == 0))
+	if (stream->use_primary) {
+		ret = ra_sd_rx_validate_stream_interface(&stream->primary);
+		if (ret < 0)
+			return ret;
+	}
+
+	if (stream->use_secondary) {
+		ret = ra_sd_rx_validate_stream_interface(&stream->secondary);
+		if (ret < 0)
+			return ret;
+	}
+
+	if (stream->dscp_tos > 64)
 		return -EINVAL;
 
-	if (stream->use_secondary &&
-	    (stream->secondary.destination_ip == 0	||
-	     stream->secondary.destination_port == 0	||
-	     stream->secondary.source_ip == 0		||
-	     stream->secondary.source_port == 0))
+	if (stream->rtp_ssrc == 0)
+		return -EINVAL;
+
+	/* RFC 3550 */
+	if (stream->rtp_payload_type <= 95 ||
+	    stream->rtp_payload_type >= 127)
+		return -EINVAL;
+
+	if (stream->rtp_payload_type == 2 &&
+	    stream->num_channels != 2)
+		return -EINVAL;
+
+	if (stream->rtp_payload_type == 3 &&
+	    stream->num_channels != 1)
 		return -EINVAL;
 
 	if (stream->codec >= _RA_STREAM_CODEC_MAX)
@@ -80,7 +117,7 @@ int ra_sd_tx_add_stream_ioctl(struct ra_sd_tx *tx, struct file *filp,
 		return ret;
 
 	ip_total_len = ra_sd_tx_stream_ip_length(&cmd.stream);
-	if (ip_total_len > 1500)
+	if (ip_total_len > RA_MAX_ETHERNET_PACKET_SIZE)
 		return -EINVAL;
 
 	e = kzalloc(sizeof(*e), GFP_KERNEL);
@@ -149,7 +186,7 @@ int ra_sd_tx_update_stream_ioctl(struct ra_sd_tx *tx, struct file *filp,
 		return ret;
 
 	ip_total_len = ra_sd_tx_stream_ip_length(&cmd.stream);
-	if (ip_total_len > 1500)
+	if (ip_total_len > RA_MAX_ETHERNET_PACKET_SIZE)
 		return -EINVAL;
 
 	mutex_lock(&tx->mutex);

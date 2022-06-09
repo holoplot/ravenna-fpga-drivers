@@ -24,7 +24,7 @@ static struct ra_sd_rx_stream rx_stream = {
 	.rtp_offset 		= 0,
 	.jitter_buffer_margin 	= 0,
 	.rtp_ssrc 		= 0,
-	.rtp_payload_type 	= 0,
+	.rtp_payload_type 	= 97,
 
 	.codec 			= RA_STREAM_CODEC_L24,
 	.num_channels 		= 8,
@@ -45,10 +45,10 @@ static struct ra_sd_tx_stream tx_stream = {
 
 	.next_rtp_sequence_num	= 0,
 
-	.rtp_payload_type	= 0,
+	.rtp_payload_type	= 97,
 	.next_rtp_tx_time	= 0,
 	.rtp_offset		= 0,
-	.rtp_ssrc		= 0,
+	.rtp_ssrc		= 1234,
 
 	.codec			= RA_STREAM_CODEC_L24,
 	.num_samples		= 16,

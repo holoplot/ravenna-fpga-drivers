@@ -258,7 +258,7 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 			ra_sd_rx_print_interface(s, &st->secondary);
 		}
 
-		if (st->vlan_tag != 0)
+		if (st->vlan_tagged)
 			seq_printf(s, "  VLAN tag: %d\n",
 				   be16_to_cpu(st->vlan_tag));
 

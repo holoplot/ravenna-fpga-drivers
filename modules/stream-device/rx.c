@@ -14,26 +14,57 @@ ra_sd_rx_stream_elem_find_by_index(struct ra_sd_rx *rx, int index)
 	return xa_is_err(e) ? NULL : e;
 }
 
-static int ra_sd_rx_validate_stream(struct ra_sd_rx_stream *stream)
+static int
+ra_sd_rx_validate_stream_interface(const struct ra_sd_rx_stream_interface *iface)
 {
-	int i;
+	if (iface->destination_ip != 0 &&
+	    iface->destination_port == 0)
+		return -EINVAL;
+
+	/* RFC 3550 */
+	if (iface->destination_port > 0 &&
+	    iface->destination_port < 1024)
+		return -EINVAL;
+
+	return 0;
+}
+
+static int ra_sd_rx_validate_stream(const struct ra_sd_rx_stream *stream)
+{
+	int i, ret;
 
 	if (stream->primary.destination_ip == 0 &&
 	    stream->secondary.destination_ip == 0)
 		return -EINVAL;
 
-	if (stream->primary.destination_ip != 0 &&
-	    stream->primary.destination_port == 0)
-		return -EINVAL;
+	ret = ra_sd_rx_validate_stream_interface(&stream->primary);
+	if (ret < 0)
+		return ret;
 
-	if (stream->secondary.destination_ip != 0 &&
-	    stream->secondary.destination_port == 0)
+	ret = ra_sd_rx_validate_stream_interface(&stream->secondary);
+	if (ret < 0)
+		return ret;
+
+	if (stream->vlan_tagged && be16_to_cpu(stream->vlan_tag) > 4095)
 		return -EINVAL;
 
 	if (stream->codec >= _RA_STREAM_CODEC_MAX)
 		return -EINVAL;
 
 	if (stream->num_channels > RA_MAX_CHANNELS)
+		return -EINVAL;
+
+	/* RFC 3550 */
+	if (stream->rtp_payload_type <= 95 ||
+	    stream->rtp_payload_type >= 127)
+		return -EINVAL;
+
+	if (stream->rtp_payload_type == 2 &&
+	    stream->num_channels != 2)
+		return -EINVAL;
+
+	if (stream->rtp_payload_type == 3 &&
+	    stream->num_channels != 1)
 		return -EINVAL;
 
 	for (i = 0; i < stream->num_channels; i++)
@@ -43,7 +74,7 @@ static int ra_sd_rx_validate_stream(struct ra_sd_rx_stream *stream)
 	return 0;
 }
 
-static int ra_sd_rx_tracks_available(struct ra_sd_rx *rx,
+static int ra_sd_rx_tracks_available(const struct ra_sd_rx *rx,
 				     const struct ra_sd_rx_stream *stream)
 {
 	int i;
