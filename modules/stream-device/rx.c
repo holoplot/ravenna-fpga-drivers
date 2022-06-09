@@ -55,16 +55,14 @@ static int ra_sd_rx_validate_stream(const struct ra_sd_rx_stream *stream)
 		return -EINVAL;
 
 	/* RFC 3550 */
-	if (stream->rtp_payload_type <= 95 ||
-	    stream->rtp_payload_type >= 127)
-		return -EINVAL;
-
-	if (stream->rtp_payload_type == 2 &&
-	    stream->num_channels != 2)
-		return -EINVAL;
-
-	if (stream->rtp_payload_type == 3 &&
-	    stream->num_channels != 1)
+	if (stream->rtp_payload_type == 2) {
+		if (stream->num_channels != 2)
+			return -EINVAL;
+	} else if (stream->rtp_payload_type == 3) {
+		if (stream->num_channels != 1)
+			return -EINVAL;
+	} else if (stream->rtp_payload_type <= 95 ||
+		   stream->rtp_payload_type >= 127)
 		return -EINVAL;
 
 	for (i = 0; i < stream->num_channels; i++)
