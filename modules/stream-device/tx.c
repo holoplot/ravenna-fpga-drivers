@@ -24,11 +24,6 @@ ra_sd_rx_validate_stream_interface(const struct ra_sd_tx_stream_interface *iface
 	    iface->source_port == 0)
 		return -EINVAL;
 
-	/* RFC 3550 */
-	if (iface->destination_port > 0 &&
-	    iface->destination_port < 1024)
-		return -EINVAL;
-
 	if (iface->vlan_tagged && be16_to_cpu(iface->vlan_tag) > 4095)
 		return -EINVAL;
 
