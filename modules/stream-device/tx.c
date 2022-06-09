@@ -5,6 +5,7 @@
 #include <linux/of.h>
 
 #include "main.h"
+#include "rtp.h"
 
 static struct ra_sd_tx_stream_elem *
 ra_sd_tx_stream_elem_find_by_index(struct ra_sd_tx *tx, int index)
@@ -54,22 +55,17 @@ static int ra_sd_tx_validate_stream(const struct ra_sd_tx_stream *stream)
 			return ret;
 	}
 
-	if (stream->dscp_tos > 64)
+	if (stream->dscp_tos >= 64)
 		return -EINVAL;
 
 	if (stream->rtp_ssrc == 0)
 		return -EINVAL;
 
-	/* RFC 3550 */
-	if (stream->rtp_payload_type == 2) {
-		if (stream->num_channels != 2)
-			return -EINVAL;
-	} else if (stream->rtp_payload_type == 3) {
-		if (stream->num_channels != 1)
-			return -EINVAL;
-	} else if (stream->rtp_payload_type <= 95 ||
-		   stream->rtp_payload_type >= 127)
-		return -EINVAL;
+	ret = ra_sd_validate_rtp_payload_type(stream->rtp_payload_type,
+					      stream->num_channels,
+					      stream->codec);
+	if (ret < 0)
+		return ret;
 
 	if (stream->codec >= _RA_STREAM_CODEC_MAX)
 		return -EINVAL;
