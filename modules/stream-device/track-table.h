@@ -28,9 +28,6 @@ void ra_track_table_set(struct ra_track_table *trtb,
 			int index, int n_channels, s16 *tracks);
 void ra_track_table_free(struct ra_track_table *trtb,
 			 int n_channels, int trtb_index);
-
-size_t ra_track_table_used(const struct ra_track_table *trtb);
-
 int ra_track_table_probe(struct device *dev,
 			 struct device_node *np,
 			 struct ra_track_table *trtb);

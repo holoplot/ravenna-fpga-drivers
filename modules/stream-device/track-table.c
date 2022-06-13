@@ -55,11 +55,6 @@ void ra_track_table_reset(struct ra_track_table *trtb)
 	bitmap_clear(trtb->used_entries, 0, trtb->max_entries);
 }
 
-size_t ra_track_table_used(const struct ra_track_table *trtb)
-{
-	return bitmap_weight(trtb->used_entries, trtb->max_entries);
-}
-
 int ra_track_table_probe(struct device *dev,
 			 struct device_node *np,
 			 struct ra_track_table *trtb)

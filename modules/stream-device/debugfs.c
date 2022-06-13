@@ -91,8 +91,9 @@ static int ra_sd_tx_summary_show(struct seq_file *s, void *p)
 		count++;
 
 	seq_printf(s, "Streams: %u/%u\n", count, priv->tx.sttb.max_entries);
-	seq_printf(s, "Tracks: %lu/%u\n",
-		   ra_track_table_used(&priv->tx.trtb),
+	seq_printf(s, "Track table entries: %u/%u\n",
+		   bitmap_weight(priv->tx.trtb.used_entries,
+				 priv->tx.trtb.max_entries),
 		   priv->tx.trtb.max_entries);
 
 	mutex_unlock(&priv->tx.mutex);
@@ -213,9 +214,13 @@ static int ra_sd_rx_summary_show(struct seq_file *s, void *p)
 		count++;
 
 	seq_printf(s, "Streams: %u/%u\n", count, priv->rx.sttb.max_entries);
-	seq_printf(s, "Tracks: %lu/%u\n",
-		   ra_track_table_used(&priv->rx.trtb),
+	seq_printf(s, "Track table entries: %u/%u\n",
+		   bitmap_weight(priv->rx.trtb.used_entries,
+				 priv->rx.trtb.max_entries),
 		   priv->rx.trtb.max_entries);
+	seq_printf(s, "Tracks: %u/%u\n",
+		   bitmap_weight(priv->rx.used_tracks, RA_MAX_TRACKS),
+		   RA_MAX_TRACKS);
 
 	mutex_unlock(&priv->rx.mutex);
 

@@ -114,7 +114,8 @@ RX decoder fifo overflow counter: 2
 * `rx-summary`
 ```
 Streams: 8/128
-Tracks: 64/1024
+Track table entries: 64/1024
+Tracks: 64/256
 ```
 
 * `rx-streams`
@@ -164,7 +165,7 @@ Fragmented entries: 0
 * `tx-summary`
 ```
 Streams: 1/64
-Tracks: 8/1024
+Track table entries: 8/1024
 ```
 
 * `tx-streams`
