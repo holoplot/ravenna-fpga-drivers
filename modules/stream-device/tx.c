@@ -248,7 +248,7 @@ static void ra_sd_tx_free_stream(struct ra_sd_tx *tx,
 				 struct ra_sd_tx_stream_elem *e,
 				 int index)
 {
-	dev_dbg(tx->dev, "Deleting stream %d", index);
+	dev_dbg(tx->dev, "Deleting TX stream %d", index);
 
 	ra_track_table_free(&tx->trtb, e->trtb_index, e->stream.num_channels);
 	ra_stream_table_tx_del(&tx->sttb, index);
