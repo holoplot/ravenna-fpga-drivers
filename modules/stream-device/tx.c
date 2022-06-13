@@ -120,7 +120,7 @@ int ra_sd_tx_add_stream_ioctl(struct ra_sd_tx *tx, struct file *filp,
 	mutex_lock(&tx->mutex);
 
 	ret = xa_alloc(&tx->streams, &index, e,
-		       XA_LIMIT(0, tx->sttb.max_entries), GFP_KERNEL);
+		       XA_LIMIT(0, tx->sttb.max_entries-1), GFP_KERNEL);
 	if (ret < 0) {
 		dev_err(tx->dev, "xa_alloc() failed: %d\n", ret);
 		goto out_unlock;

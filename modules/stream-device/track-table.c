@@ -11,11 +11,11 @@ int ra_track_table_alloc(struct ra_track_table *trtb, int n_channels)
 {
 	unsigned long start;
 
-	/* Allocate a contingous area in the track table */
+	/* Allocate a continuous area in the track table */
 	start = bitmap_find_next_zero_area(trtb->used_entries,
 					   trtb->max_entries,
 					   0, n_channels, 0);
-	if (start > trtb->max_entries)
+	if (start >= trtb->max_entries)
 		return -ENOSPC;
 
 	return start;

@@ -132,7 +132,7 @@ int ra_sd_rx_add_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 		goto out_unlock;
 
 	ret = xa_alloc(&rx->streams, &index, e,
-		       XA_LIMIT(0, rx->sttb.max_entries), GFP_KERNEL);
+		       XA_LIMIT(0, rx->sttb.max_entries-1), GFP_KERNEL);
 	if (ret < 0) {
 		dev_err(rx->dev, "xa_alloc() failed: %d\n", ret);
 		goto out_unlock;
