@@ -11,8 +11,11 @@ enum {
 	_RA_STREAM_CODEC_MAX
 };
 
-#define RA_MAX_ETHERNET_PACKET_SIZE	1460
-#define RA_MAX_CHANNELS			256
-#define RA_MAX_TRACKS			256
+#define RA_MAX_ETHERNET_PACKET_SIZE	(1460)
+#define RA_MAX_CHANNELS			(256)
+#define RA_MAX_TRACKS			(256)
+
+/* Used to route a channel to no track */
+#define RA_NULL_TRACK			(-1)
 
 #endif /* _UAPI_RAVENNA_TYPES_H */

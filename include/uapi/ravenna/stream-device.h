@@ -94,7 +94,8 @@ struct ra_sd_rx_stream {
 	__u8 rtp_payload_type;
 
 	__u16 num_channels;
-	/* Put -1 to route the channel nowhere */
+
+	/* Put RA_NULL_TRACK to route the channel nowhere */
 	__s16 tracks[RA_MAX_CHANNELS];
 };
 
@@ -147,7 +148,8 @@ struct ra_sd_tx_stream {
 
 	__u8 num_samples;
 	__u16 num_channels;
-	/* Put -1 to route the channel nowhere */
+
+	/* Put RA_NULL_TRACK to route the channel nowhere */
 	__s16 tracks[RA_MAX_CHANNELS];
 };
 
