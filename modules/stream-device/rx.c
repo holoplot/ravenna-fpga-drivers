@@ -75,8 +75,8 @@ static int ra_sd_rx_tracks_available(const struct ra_sd_rx *rx,
 	return 0;
 }
 
-static void ra_sd_rx_tracks_alloc(struct ra_sd_rx *rx,
-				  const struct ra_sd_rx_stream *stream)
+static void ra_sd_rx_tracks_mark_used(struct ra_sd_rx *rx,
+				      const struct ra_sd_rx_stream *stream)
 {
 	int i;
 
@@ -84,8 +84,8 @@ static void ra_sd_rx_tracks_alloc(struct ra_sd_rx *rx,
 		set_bit(stream->tracks[i], rx->used_tracks);
 }
 
-static void ra_sd_rx_tracks_free(struct ra_sd_rx *rx,
-				 const struct ra_sd_rx_stream *stream)
+static void ra_sd_rx_tracks_mark_unused(struct ra_sd_rx *rx,
+					const struct ra_sd_rx_stream *stream)
 {
 	int i;
 
@@ -144,7 +144,7 @@ int ra_sd_rx_add_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 
 	e->trtb_index = ret;
 
-	ra_sd_rx_tracks_alloc(rx, &e->stream);
+	ra_sd_rx_tracks_mark_used(rx, &e->stream);
 	ra_track_table_set(&rx->trtb, e->trtb_index,
 			   e->stream.num_channels, e->stream.tracks);
 	ra_stream_table_rx_set(&rx->sttb, &e->stream, index,
@@ -203,11 +203,11 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 		* If the number of channels changes, we need to free the current
 		* track table allocation and reserve a new range of tracks.
 		*/
-		ra_sd_rx_tracks_free(rx, &e->stream);
+		ra_sd_rx_tracks_mark_unused(rx, &e->stream);
 		ret = ra_sd_rx_tracks_available(rx, &cmd.stream);
 		if (ret < 0) {
 			/* Roll back */
-			ra_sd_rx_tracks_alloc(rx, &e->stream);
+			ra_sd_rx_tracks_mark_used(rx, &e->stream);
 			goto out_unlock;
 		}
 
@@ -219,7 +219,7 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 			dev_err(rx->dev, "ra_track_table_alloc() failed: %d\n", ret);
 
 			/* Roll back */
-			ra_sd_rx_tracks_alloc(rx, &e->stream);
+			ra_sd_rx_tracks_mark_used(rx, &e->stream);
 
 			ret = ra_track_table_alloc(&rx->trtb,
 						   e->stream.num_channels);
@@ -253,7 +253,7 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 
 	memcpy(&e->stream, &cmd.stream, sizeof(e->stream));
 
-	ra_sd_rx_tracks_alloc(rx, &e->stream);
+	ra_sd_rx_tracks_mark_used(rx, &e->stream);
 	ra_track_table_set(&rx->trtb, e->trtb_index,
 			   e->stream.num_channels, e->stream.tracks);
 	ra_stream_table_rx_set(&rx->sttb, &e->stream, cmd.index,
@@ -272,8 +272,8 @@ static void ra_sd_rx_free_stream(struct ra_sd_rx *rx,
 	dev_dbg(rx->dev, "Deleting RX stream %d", index);
 
 	ra_track_table_free(&rx->trtb, e->trtb_index, e->stream.num_channels);
+	ra_sd_rx_tracks_mark_unused(rx, &e->stream);
 	ra_stream_table_rx_del(&rx->sttb, index);
-	ra_sd_rx_tracks_free(rx, &e->stream);
 	xa_erase(&rx->streams, index);
 	put_pid(e->pid);
 	kfree(e);
