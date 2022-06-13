@@ -15,6 +15,13 @@ gcc -o client -Wall -I include/ client.c
 
 #include <uapi/ravenna/stream-device.h>
 
+static inline int RET_NERRNO(int ret) {
+	if (ret < 0)
+		return -errno;
+
+	return ret;
+}
+
 static struct ra_sd_rx_stream rx_stream = {
 	.sync_source 		= 0,
 	.vlan_tagged 		= 0,
@@ -73,7 +80,7 @@ static int add_rx_stream(int fd, int x)
 	for (i = 0; i < cmd.stream.num_channels; i++)
 		cmd.stream.tracks[i] = i + (x * cmd.stream.num_channels);
 
-	return ioctl(fd, RA_SD_ADD_RX_STREAM, &cmd);
+	return RET_NERRNO(ioctl(fd, RA_SD_ADD_RX_STREAM, &cmd));
 }
 
 static int update_rx_stream(int fd, int x, int index)
@@ -97,7 +104,7 @@ static int update_rx_stream(int fd, int x, int index)
 	for (i = 0; i < cmd.stream.num_channels; i++)
 		cmd.stream.tracks[i] = i + (x * cmd.stream.num_channels);
 
-	return ioctl(fd, RA_SD_UPDATE_RX_STREAM, &cmd);
+	return RET_NERRNO(ioctl(fd, RA_SD_UPDATE_RX_STREAM, &cmd));
 }
 
 static int delete_rx_stream(int fd, int index)
@@ -106,7 +113,7 @@ static int delete_rx_stream(int fd, int index)
 		.index = index,
 	};
 
-	return ioctl(fd, RA_SD_DELETE_RX_STREAM, &cmd);
+	return RET_NERRNO(ioctl(fd, RA_SD_DELETE_RX_STREAM, &cmd));
 }
 
 static int add_tx_stream(int fd, int x)
@@ -128,7 +135,7 @@ static int add_tx_stream(int fd, int x)
 	for (i = 0; i < cmd.stream.num_channels; i++)
 		cmd.stream.tracks[i] = i + (x * cmd.stream.num_channels);
 
-	return ioctl(fd, RA_SD_ADD_TX_STREAM, &cmd);
+	return RET_NERRNO(ioctl(fd, RA_SD_ADD_TX_STREAM, &cmd));
 }
 
 static int update_tx_stream(int fd, int x, int index)
@@ -152,7 +159,7 @@ static int update_tx_stream(int fd, int x, int index)
 	for (i = 0; i < cmd.stream.num_channels; i++)
 		cmd.stream.tracks[i] = i + (x * cmd.stream.num_channels);
 
-	return ioctl(fd, RA_SD_UPDATE_TX_STREAM, &cmd);
+	return RET_NERRNO(ioctl(fd, RA_SD_UPDATE_TX_STREAM, &cmd));
 }
 
 static int delete_tx_stream(int fd, int index)
@@ -161,7 +168,7 @@ static int delete_tx_stream(int fd, int index)
 		.index = index,
 	};
 
-	return ioctl(fd, RA_SD_DELETE_TX_STREAM, &cmd);
+	return RET_NERRNO(ioctl(fd, RA_SD_DELETE_TX_STREAM, &cmd));
 }
 
 static int read_rtcp_rx_stat(int fd, int index)
