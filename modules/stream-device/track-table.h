@@ -15,11 +15,13 @@ struct ra_track_table {
 static inline void ra_track_table_write(struct ra_track_table *trtb,
 					int index, u32 val)
 {
+	BUG_ON(index >= trtb->max_entries);
 	iowrite32(val, trtb->regs + (index * sizeof(u32)));
 }
 
 static inline u32 ra_track_table_read(struct ra_track_table *trtb, int index)
 {
+	BUG_ON(index >= trtb->max_entries);
 	return ioread32(trtb->regs + (index * sizeof(u32)));
 }
 
