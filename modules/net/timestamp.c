@@ -95,7 +95,7 @@ static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 		return;
 	}
 
-	packet_seq_id = ntohs(*(u16*)(data + offset + OFF_PTP_SEQUENCE_ID));
+	packet_seq_id = ntohs(*(__be16*)(data + offset + OFF_PTP_SEQUENCE_ID));
 
 	if (likely(ts->sequence_id == packet_seq_id)) {
 		/* OK, timestamp is valid */
