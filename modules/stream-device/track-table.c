@@ -89,7 +89,5 @@ int ra_track_table_probe(struct device *dev,
 
 	ra_track_table_reset(trtb);
 
-	dev_info(dev, "Ravenna track table, %d entries", trtb->max_entries);
-
 	return 0;
 }

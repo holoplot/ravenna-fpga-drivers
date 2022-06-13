@@ -262,7 +262,7 @@ int ra_stream_table_tx_probe(struct device *dev,
 
 	ret = of_address_to_resource(np, 0, &res);
 	if (ret < 0) {
-		dev_err(dev, "Failed to access stream table resource: %d", ret);
+		dev_err(dev, "Failed to access TX stream table: %d", ret);
 		return ret;
 	}
 
@@ -275,7 +275,7 @@ int ra_stream_table_tx_probe(struct device *dev,
 
 	sttb->regs = devm_ioremap_resource(dev, &res);
 	if (IS_ERR(sttb->regs)) {
-		dev_err(dev, "Failed to map resource for stream table");
+		dev_err(dev, "Failed to map resource for TX stream table");
 		return PTR_ERR(sttb->regs);
 	}
 
@@ -283,8 +283,7 @@ int ra_stream_table_tx_probe(struct device *dev,
 
 	ra_stream_table_tx_reset(sttb);
 
-	dev_info(dev, "Ravenna stream table TX, %d entries",
-		 sttb->max_entries);
+	dev_info(dev, "TX stream table, %d entries", sttb->max_entries);
 
 	return 0;
 }

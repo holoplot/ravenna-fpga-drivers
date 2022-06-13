@@ -51,10 +51,10 @@ static void ra_sd_track_table_dump(struct ra_track_table *trtb,
 		seq_printf(s, " 0x%02x", i);
 
 	seq_puts(s, "\n");
-	seq_puts(s, "---------");
+	seq_puts(s, "-----------");
 
 	for (i = 0; i < width; i++)
-		seq_puts(s, "------");
+		seq_puts(s, "-----");
 
 	seq_puts(s, "\n");
 

@@ -372,6 +372,8 @@ int ra_sd_rx_probe(struct ra_sd_rx *rx, struct device *dev)
 	if (ret < 0)
 		return ret;
 
+	dev_info(dev, "RX track table, %d entries", rx->trtb.max_entries);
+
 	xa_init_flags(&rx->streams, XA_FLAGS_ALLOC);
 	ret = devm_add_action_or_reset(dev, ra_sd_rx_destroy_streams,
 				       &rx->streams);

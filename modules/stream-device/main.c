@@ -163,7 +163,7 @@ static int ra_sd_probe(struct platform_device *pdev)
 	ra_sd_iow(priv, RA_SD_IRQ_MASK,
 		  RA_SD_IRQ_RTCP_RX | RA_SD_IRQ_RTCP_TX);
 
-	dev_info(dev, "Ravenna stream-device '%s', minor %d",
+	dev_info(dev, "Created stream device '%s', minor %d",
 		 priv->misc.name, priv->misc.minor);
 
 	return 0;
