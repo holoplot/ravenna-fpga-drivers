@@ -91,7 +91,7 @@ static ssize_t _name##_show(struct device *dev,			\
 {								\
 	return ra_net_show_u32(dev, attr, buf, _reg);		\
 }								\
-DEVICE_ATTR_RO(_name)
+static DEVICE_ATTR_RO(_name)
 
 RA_NET_ATTR_U32_RO(udp_throttled_packets, RA_NET_PP_CNT_UDP_THROTTLE);
 
@@ -150,6 +150,7 @@ static struct attribute *ra_net_attrs[] = {
 	&dev_attr_driver_version.attr,
 	&dev_attr_rtp_global_offset.attr,
 	&dev_attr_counter_reset.attr,
+	&dev_attr_udp_throttled_packets.attr,
 	&dev_attr_rx_packets_parsed.attr,
 	&dev_attr_rx_queue_errors.attr,
 	&dev_attr_rx_checksum_errors.attr,
