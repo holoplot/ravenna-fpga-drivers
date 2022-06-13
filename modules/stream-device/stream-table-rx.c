@@ -17,11 +17,11 @@
 
 struct ra_stream_table_rx_fpga {
 #ifdef __LITTLE_ENDIAN
-	__be32 destination_ip_primary;		/* 0x00 */
-	__be32 destination_ip_secondary;	/* 0x04 */
+	__u32 destination_ip_primary;		/* 0x00 */
+	__u32 destination_ip_secondary;		/* 0x04 */
 
-	__be16 destination_port_secondary;	/* 0x08 */
-	__be16 destination_port_primary;	/* 0x0a */
+	__u16 destination_port_secondary;	/* 0x08 */
+	__u16 destination_port_primary;		/* 0x0a */
 
 	__u8 num_channels;			/* 0x0f */
 	__u8 reserved_0;			/* 0x0e */
@@ -39,11 +39,11 @@ struct ra_stream_table_rx_fpga {
 	__u8 rtcp_control;			/* 0x1e */
 	__u16 rtp_filter_vlan_id;		/* 0x1c */
 #else /* __BIG_ENDIAN */
-	__be32 destination_ip_primary;		/* 0x00 */
-	__be32 destination_ip_secondary;	/* 0x04 */
+	__u32 destination_ip_primary;		/* 0x00 */
+	__u32 destination_ip_secondary;		/* 0x04 */
 
-	__be16 destination_port_primary;	/* 0x0a */
-	__be16 destination_port_secondary;	/* 0x08 */
+	__u16 destination_port_primary;		/* 0x0a */
+	__u16 destination_port_secondary;	/* 0x08 */
 
 	__u8 misc_control;			/* 0x0c */
 	__u8 codec;				/* 0x0d */

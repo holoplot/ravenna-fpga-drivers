@@ -109,7 +109,7 @@ int ra_sd_read_rtcp_rx_stat_ioctl(struct ra_sd_priv *priv,
 
 	ra_sd_parse_rtcp_rx_data(&priv->rtcp_rx.data, &cmd.data);
 
-	if (copy_to_user(&cmd, buf, sizeof(cmd)))
+	if (copy_to_user(buf, &cmd, sizeof(cmd)))
 		ret = -EFAULT;
 
 out_unlock:
@@ -154,7 +154,7 @@ int ra_sd_read_rtcp_tx_stat_ioctl(struct ra_sd_priv *priv,
 
 	ra_sd_parse_rtcp_tx_data(&priv->rtcp_tx.data, &cmd.data);
 
-	if (copy_to_user(&cmd, buf, sizeof(cmd)))
+	if (copy_to_user(buf, &cmd, sizeof(cmd)))
 		ret = -EFAULT;
 
 out_unlock:
