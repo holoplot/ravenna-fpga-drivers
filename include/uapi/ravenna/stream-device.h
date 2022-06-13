@@ -39,8 +39,8 @@ struct ra_sd_rtcp_rx_data {
 		__u16 late_pkts;
 		__u16 early_pkts;
 
-		__u8 error:1;
-		__u8 playing:1;
+		__bool error;
+		__bool playing;
 
 		__u16 timeout_counter;
 	} primary, secondary;
@@ -76,11 +76,11 @@ struct ra_sd_rx_stream {
 		__be16 destination_port;
 	} primary, secondary;
 
-	__u8 sync_source:1;
-	__u8 vlan_tagged:1;
-	__u8 hitless_protection:1;
-	__u8 synchronous:1;
-	__u8 rtp_filter:1;
+	__bool sync_source;
+	__bool vlan_tagged;
+	__bool hitless_protection;
+	__bool synchronous;
+	__bool rtp_filter;
 
 	__be16 vlan_tag;
 
@@ -125,17 +125,17 @@ struct ra_sd_tx_stream {
 		__be16 destination_port;
 		__be16 source_port;
 		__be16 vlan_tag;
-		__u8 vlan_tagged:1;
+		__bool vlan_tagged;
 		__u8 destination_mac[6];
 	} primary, secondary;
 
 	__u8 ttl;
 	__u8 dscp_tos;
 
-	__u8 vlan_tagged:1;
-	__u8 multicast:1;
-	__u8 use_primary:1;
-	__u8 use_secondary:1;
+	__bool vlan_tagged;
+	__bool multicast;
+	__bool use_primary;
+	__bool use_secondary;
 
 	/* RA_STREAM_CODEC_... */
 	__u8 codec;

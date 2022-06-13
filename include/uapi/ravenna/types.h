@@ -3,6 +3,8 @@
 #ifndef _UAPI_RAVENNA_TYPES_H
 #define _UAPI_RAVENNA_TYPES_H
 
+typedef __u8 __bool;
+
 enum {
 	RA_STREAM_CODEC_AM824 = 0,
 	RA_STREAM_CODEC_L32 = 1,
