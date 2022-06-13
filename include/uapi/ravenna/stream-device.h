@@ -38,16 +38,15 @@ struct ra_sd_rtcp_rx_data {
 		__u16 buffer_margin_max;
 		__u16 late_pkts;
 		__u16 early_pkts;
+		__u16 timeout_counter;
 
 		__bool error;
 		__bool playing;
-
-		__u16 timeout_counter;
 	} primary, secondary;
 };
 
 struct ra_sd_rtcp_tx_data {
-	__u32 rtp_timestamp;			/* DATA_0 */
+	__u32 rtp_timestamp;
 
 	struct ra_sd_rtcp_tx_data_interface {
 		__u32 sent_pkts;
@@ -74,6 +73,7 @@ struct ra_sd_rx_stream {
 		__be32 destination_ip;
 		__be32 source_ip;
 		__be16 destination_port;
+		__u8 reserved_0[2];
 	} primary, secondary;
 
 	__bool sync_source;
@@ -82,16 +82,17 @@ struct ra_sd_rx_stream {
 	__bool synchronous;
 	__bool rtp_filter;
 
-	__be16 vlan_tag;
-
 	/* RA_SD_RX_STREAM_CODEC_... */
 	__u8 codec;
-	__u32 rtp_offset;
-
-	__u16 jitter_buffer_margin;
-	__u32 rtp_ssrc;
-
 	__u8 rtp_payload_type;
+
+	__u8 reserved_1[1];
+
+	__be16 vlan_tag;
+	__u16 jitter_buffer_margin;
+
+	__u32 rtp_offset;
+	__u32 rtp_ssrc;
 
 	__u16 num_channels;
 
@@ -127,10 +128,8 @@ struct ra_sd_tx_stream {
 		__be16 vlan_tag;
 		__bool vlan_tagged;
 		__u8 destination_mac[6];
+		__u8 reserved_0[3];
 	} primary, secondary;
-
-	__u8 ttl;
-	__u8 dscp_tos;
 
 	__bool vlan_tagged;
 	__bool multicast;
@@ -139,15 +138,19 @@ struct ra_sd_tx_stream {
 
 	/* RA_STREAM_CODEC_... */
 	__u8 codec;
-
-	__u16 next_rtp_sequence_num;
 	__u8 rtp_payload_type;
 	__u8 next_rtp_tx_time;
+	__u8 ttl;
+	__u8 dscp_tos;
+	__u8 num_samples;
+
+	__u8 reserved_1[1];
+
+	__u16 next_rtp_sequence_num;
+	__u16 num_channels;
+
 	__u32 rtp_offset;
 	__u32 rtp_ssrc;
-
-	__u8 num_samples;
-	__u16 num_channels;
 
 	/* Put RA_NULL_TRACK to route the channel nowhere */
 	__s16 tracks[RA_MAX_CHANNELS];
