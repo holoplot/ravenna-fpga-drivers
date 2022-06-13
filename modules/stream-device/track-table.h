@@ -23,6 +23,23 @@ static inline u32 ra_track_table_read(struct ra_track_table *trtb, int index)
 	return ioread32(trtb->regs + (index * sizeof(u32)));
 }
 
+static inline int ra_stream_find_used_track(int start, int n_channels,
+					    const s16 *tracks)
+{
+	int i;
+
+	for (i = start; i < n_channels; i++)
+		if (tracks[i] >= 0)
+			break;
+
+	return i;
+}
+
+#define FOR_EACH_TRACK(i,n_channels,tracks)				\
+	for (i = ra_stream_find_used_track(0, (n_channels), (tracks));	\
+	     i < (n_channels);						\
+	     i = ra_stream_find_used_track((i) + 1, (n_channels), (tracks)))
+
 int ra_track_table_alloc(struct ra_track_table *trtb, int n_channels);
 void ra_track_table_set(struct ra_track_table *trtb,
 			int index, int n_channels, s16 *tracks);

@@ -18,6 +18,8 @@ int ra_track_table_alloc(struct ra_track_table *trtb, int n_channels)
 	if (start >= trtb->max_entries)
 		return -ENOSPC;
 
+	bitmap_set(trtb->used_entries, start, n_channels);
+
 	return start;
 }
 
@@ -26,12 +28,8 @@ void ra_track_table_set(struct ra_track_table *trtb,
 {
 	int i;
 
-	for (i = 0; i < n_channels; i++) {
-		u32 v = tracks[i] > 0 ? tracks[i] : RA_TRACK_TABLE_MUTE;
-
-		set_bit(index+i, trtb->used_entries);
-		ra_track_table_write(trtb, index+i, v);
-	}
+	FOR_EACH_TRACK(i, n_channels, tracks)
+		ra_track_table_write(trtb, index+i, tracks[i]);
 }
 
 void ra_track_table_free(struct ra_track_table *trtb,
@@ -39,10 +37,10 @@ void ra_track_table_free(struct ra_track_table *trtb,
 {
 	int i;
 
-	for (i = 0; i < n_channels; i++) {
-		clear_bit(index+i, trtb->used_entries);
+	for (i = 0; i < n_channels; i++)
 		ra_track_table_write(trtb, index+i, RA_TRACK_TABLE_MUTE);
-	}
+
+	bitmap_clear(trtb->used_entries, index, n_channels);
 }
 
 void ra_track_table_reset(struct ra_track_table *trtb)

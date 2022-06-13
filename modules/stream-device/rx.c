@@ -68,10 +68,9 @@ static int ra_sd_rx_tracks_available(const struct ra_sd_rx *rx,
 {
 	int i;
 
-	for (i = 0; i < stream->num_channels; i++)
-		if (stream->tracks[i] > 0)
-			if (test_bit(stream->tracks[i], rx->used_tracks))
-				return -EBUSY;
+	FOR_EACH_TRACK(i, stream->num_channels, stream->tracks)
+		if (test_bit(stream->tracks[i], rx->used_tracks))
+			return -EBUSY;
 
 	return 0;
 }
@@ -81,9 +80,8 @@ static void ra_sd_rx_tracks_alloc(struct ra_sd_rx *rx,
 {
 	int i;
 
-	for (i = 0; i < stream->num_channels; i++)
-		if (stream->tracks[i] > 0)
-			set_bit(stream->tracks[i], rx->used_tracks);
+	FOR_EACH_TRACK(i, stream->num_channels, stream->tracks)
+		set_bit(stream->tracks[i], rx->used_tracks);
 }
 
 static void ra_sd_rx_tracks_free(struct ra_sd_rx *rx,
@@ -91,9 +89,8 @@ static void ra_sd_rx_tracks_free(struct ra_sd_rx *rx,
 {
 	int i;
 
-	for (i = 0; i < stream->num_channels; i++)
-		if (stream->tracks[i] > 0)
-			clear_bit(stream->tracks[i], rx->used_tracks);
+	FOR_EACH_TRACK(i, stream->num_channels, stream->tracks)
+		clear_bit(stream->tracks[i], rx->used_tracks);
 }
 
 int ra_sd_rx_add_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
