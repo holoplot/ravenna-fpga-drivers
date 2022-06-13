@@ -7,6 +7,7 @@
 #include "codec.h"
 #include "stream-table-tx.h"
 
+/* misc_control */
 #define RA_STREAM_TABLE_TX_MISC_VLD		BIT(7)
 #define RA_STREAM_TABLE_TX_MISC_ACT		BIT(6)
 #define RA_STREAM_TABLE_TX_MISC_VLAN		BIT(4)

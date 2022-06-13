@@ -7,6 +7,7 @@
 #include "codec.h"
 #include "stream-table-rx.h"
 
+/* misc_control */
 #define RA_STREAM_TABLE_RX_MISC_VLD		BIT(7)
 #define RA_STREAM_TABLE_RX_MISC_ACT		BIT(6)
 #define RA_STREAM_TABLE_RX_MISC_SYNC_SOURCE	BIT(5)
@@ -14,6 +15,9 @@
 #define RA_STREAM_TABLE_RX_MISC_EXEC_HASH	BIT(2)
 #define RA_STREAM_TABLE_RX_MISC_HITLESS		BIT(1)
 #define RA_STREAM_TABLE_RX_MISC_SYNCHRONOUS	BIT(0)
+
+/* rtp_filter_vlan_id */
+#define RA_STREAM_TABLE_RX_RTP_FILTER		BIT(15)
 
 struct ra_stream_table_rx_fpga {
 #ifdef __LITTLE_ENDIAN
@@ -121,7 +125,7 @@ static void ra_stream_table_rx_fill(const struct ra_sd_rx_stream *stream,
 
 	fpga->rtp_filter_vlan_id = be16_to_cpu(stream->vlan_tag) & 0x3f;
 	if (stream->rtp_filter)
-		fpga->rtp_filter_vlan_id |= BIT(15);
+		fpga->rtp_filter_vlan_id |= RA_STREAM_TABLE_RX_RTP_FILTER;
 
 	fpga->codec = ra_sd_codec_fpga_code(stream->codec);
 
