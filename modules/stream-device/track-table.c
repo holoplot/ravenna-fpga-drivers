@@ -44,7 +44,7 @@ void ra_track_table_free(struct ra_track_table *trtb,
 	bitmap_clear(trtb->used_entries, index, n_channels);
 }
 
-void ra_track_table_reset(struct ra_track_table *trtb)
+static void ra_track_table_reset(struct ra_track_table *trtb)
 {
 	int i;
 

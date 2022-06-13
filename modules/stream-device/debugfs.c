@@ -39,7 +39,8 @@ DEFINE_SHOW_ATTRIBUTE(ra_sd_decoder);
 
 /* Track table */
 
-void ra_sd_track_table_dump(struct ra_track_table *trtb, struct seq_file *s)
+static void ra_sd_track_table_dump(struct ra_track_table *trtb,
+				   struct seq_file *s)
 {
 	const int width = 16;
 	int i;
