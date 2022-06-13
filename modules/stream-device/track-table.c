@@ -24,7 +24,8 @@ int ra_track_table_alloc(struct ra_track_table *trtb, int n_channels)
 }
 
 void ra_track_table_set(struct ra_track_table *trtb,
-			int index, int n_channels, s16 *tracks)
+			int index, int n_channels,
+			const s16 *tracks)
 {
 	int i;
 

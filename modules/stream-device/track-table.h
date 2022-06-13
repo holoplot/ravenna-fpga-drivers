@@ -42,7 +42,7 @@ static inline int ra_stream_find_used_track(int start, int n_channels,
 
 int ra_track_table_alloc(struct ra_track_table *trtb, int n_channels);
 void ra_track_table_set(struct ra_track_table *trtb,
-			int index, int n_channels, s16 *tracks);
+			int index, int n_channels, const s16 *tracks);
 void ra_track_table_free(struct ra_track_table *trtb,
 			 int n_channels, int trtb_index);
 int ra_track_table_probe(struct device *dev,
