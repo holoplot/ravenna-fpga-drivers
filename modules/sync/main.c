@@ -66,10 +66,19 @@ static void ra_sync_misc_deregister(void *misc)
 	misc_deregister(misc);
 }
 
+static const struct regmap_config ra_sync_regmap_config = {
+	.reg_bits	= 32,
+	.val_bits	= 32,
+	.max_register 	= 0x100,
+	.reg_stride	= 4,
+};
+
 static int ra_sync_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct ra_sync_priv *priv;
+	struct resource *res;
+	void __iomem *regs;
 	const char *name;
 	int ret, irq;
 
@@ -79,6 +88,14 @@ static int ra_sync_probe(struct platform_device *pdev)
 
 	mutex_init(&priv->mutex);
 	priv->dev = dev;
+
+	regs = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
+
+	priv->regmap = devm_regmap_init_mmio(dev, regs, &ra_sync_regmap_config);
+	if (IS_ERR(priv->regmap))
+		return PTR_ERR(priv->regmap);
 
 	irq = of_irq_get(dev->of_node, 0);
 	ret = devm_request_irq(dev, irq, ra_sync_irqhandler, IRQF_SHARED,
@@ -94,14 +111,6 @@ static int ra_sync_probe(struct platform_device *pdev)
 		dev_err(dev, "could not get mclk: %d\n", ret);
 		return ret;
 	}
-
-	ret = clk_prepare_enable(priv->mclk);
-	if (ret < 0)
-		return ret;
-
-	ret = devm_add_action_or_reset(dev, ra_sync_mclk_disable_unpreprare, priv->mclk);
-	if (ret < 0)
-		return ret;
 
 	ret = of_property_read_string(dev->of_node, "lawo,device-name", &name);
 	if (ret < 0) {
@@ -122,6 +131,17 @@ static int ra_sync_probe(struct platform_device *pdev)
 		return ret;
 
 	ret = ra_sync_debugfs_init(priv);
+	if (ret < 0)
+		return ret;
+
+	regmap_write(priv->regmap, RA_SYNC_MAIN_CTRL, 0);
+	// regmap_set_bits(priv->regmap, RA_SYNC_OUT0_CTRL, RA_SYNC_OUT_ENABLE);
+
+	ret = clk_prepare_enable(priv->mclk);
+	if (ret < 0)
+		return ret;
+
+	ret = devm_add_action_or_reset(dev, ra_sync_mclk_disable_unpreprare, priv->mclk);
 	if (ret < 0)
 		return ret;
 

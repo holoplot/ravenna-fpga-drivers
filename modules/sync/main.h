@@ -6,6 +6,7 @@
 #include <linux/io.h>
 #include <linux/miscdevice.h>
 #include <linux/module.h>
+#include <linux/regmap.h>
 
 #define RA_SYNC_IRQ_STAT0		0x00 /* R Interrupt Request 0 */
 #define RA_SYNC_IRQ_STAT0_SD_EXT(n)	BIT(n)
@@ -81,22 +82,12 @@
 
 struct ra_sync_priv {
 	struct device		*dev;
+	struct regmap		*regmap;
 	struct miscdevice	misc;
-	void __iomem		*regs;
 	struct clk		*mclk;
 	struct dentry		*debugfs;
 	struct mutex		mutex;
 };
-
-static inline void ra_sync_iow(struct ra_sync_priv *priv, off_t offset, u32 value)
-{
-	iowrite32(value, priv->regs + offset);
-}
-
-static inline u32 ra_sync_ior(struct ra_sync_priv *priv, off_t offset)
-{
-	return ioread32(priv->regs + offset);
-}
 
 #define to_ra_sync_priv(x) \
 	container_of(x, struct ra_sync_priv, misc)
