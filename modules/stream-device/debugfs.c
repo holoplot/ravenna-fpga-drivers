@@ -348,40 +348,37 @@ static void ra_sd_remove_debugfs(void *root)
 int ra_sd_debugfs_init(struct ra_sd_priv *priv)
 {
 	int ret;
+	struct dentry *rx, *tx;
 
 	priv->debugfs = debugfs_create_dir(priv->misc.name, NULL);
 	if (IS_ERR(priv->debugfs))
 		return PTR_ERR(priv->debugfs);
 
-	ret = devm_add_action_or_reset(priv->dev, ra_sd_remove_debugfs,
-				       priv->debugfs);
+	ret = devm_add_action_or_reset(priv->dev, ra_sd_remove_debugfs, priv->debugfs);
 	if (ret < 0)
 		return ret;
 
-	debugfs_create_file("info", 0444, priv->debugfs,
-			    priv, &ra_sd_info_fops);
-	debugfs_create_file("decoder", 0444, priv->debugfs,
-			    priv, &ra_sd_decoder_fops);
+	debugfs_create_file("info", 0444, priv->debugfs, priv, &ra_sd_info_fops);
+	debugfs_create_file("decoder", 0444, priv->debugfs, priv, &ra_sd_decoder_fops);
 
-	debugfs_create_file("rx-summary", 0444, priv->debugfs,
-			    priv, &ra_sd_rx_summary_fops);
-	debugfs_create_file("rx-streams", 0444, priv->debugfs,
-			    priv, &ra_sd_rx_streams_fops);
-	debugfs_create_file("rx-stream-table", 0444, priv->debugfs,
-			    priv, &ra_sd_rx_stream_table_fops);
-	debugfs_create_file("rx-track-table", 0444, priv->debugfs,
-			    priv, &ra_sd_rx_track_table_fops);
-	debugfs_create_file("rx-hash-table", 0444, priv->debugfs,
-			    priv, &ra_sd_rx_hash_table_fops);
+	rx = debugfs_create_dir("rx", priv->debugfs);
+	if (IS_ERR(rx))
+		return PTR_ERR(rx);
 
-	debugfs_create_file("tx-summary", 0444, priv->debugfs,
-			    priv, &ra_sd_tx_summary_fops);
-	debugfs_create_file("tx-streams", 0444, priv->debugfs,
-			    priv, &ra_sd_tx_streams_fops);
-	debugfs_create_file("tx-stream-table", 0444, priv->debugfs,
-			    priv, &ra_sd_tx_stream_table_fops);
-	debugfs_create_file("tx-track-table", 0444, priv->debugfs,
-			    priv, &ra_sd_tx_track_table_fops);
+	debugfs_create_file("summary", 0444, rx, priv, &ra_sd_rx_summary_fops);
+	debugfs_create_file("streams", 0444, rx, priv, &ra_sd_rx_streams_fops);
+	debugfs_create_file("stream-table", 0444, rx, priv, &ra_sd_rx_stream_table_fops);
+	debugfs_create_file("track-table", 0444, rx, priv, &ra_sd_rx_track_table_fops);
+	debugfs_create_file("hash-table", 0444, rx, priv, &ra_sd_rx_hash_table_fops);
+
+	tx = debugfs_create_dir("tx", priv->debugfs);
+	if (IS_ERR(tx))
+		return PTR_ERR(tx);
+
+	debugfs_create_file("summary", 0444, tx, priv, &ra_sd_tx_summary_fops);
+	debugfs_create_file("streams", 0444, tx, priv, &ra_sd_tx_streams_fops);
+	debugfs_create_file("stream-table", 0444, tx, priv, &ra_sd_tx_stream_table_fops);
+	debugfs_create_file("tx-track-table", 0444, tx, priv, &ra_sd_tx_track_table_fops);
 
 	return 0;
 }

@@ -111,14 +111,14 @@ Device minor: 124
 RX decoder data dropped counter: 0
 RX decoder fifo overflow counter: 2
 ```
-* `rx-summary`
+* `rx/summary`
 ```
 Streams: 8/128
 Track table entries: 64/1024
 Tracks: 64/256
 ```
 
-* `rx-streams`
+* `rx/streams`
 ```
 Stream #0
   Created by: PID 1117
@@ -134,7 +134,7 @@ Stream #0
          0 ->   8     1 ->   9     2 ->  10     3 ->  11     4 ->  12     5 ->  13     6 ->  14     7 ->  15
 ```
 
-* `rx-stream-table`
+* `rx/stream-table`
 ```
 Entry #0 (VALID, ACTIVE)
   00000000: 53 72 e4 ee 53 72 e4 ee 00 00 8c 13 08 00 18 c0  Sr..Sr..........
@@ -142,7 +142,7 @@ Entry #0 (VALID, ACTIVE)
 ...
 ```
 
-* `rx-track-table`
+* `rx/track-table`
 ```
            0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09 0x0a 0x0b 0x0c 0x0d 0x0e 0x0f
 -------------------------------------------------------------------------------------------
@@ -154,7 +154,7 @@ Entry #0 (VALID, ACTIVE)
   0x050 |   -    -    -    -    -    -    -    -    -    -    -    -    -    -    -    -  
 ```
 
-* `rx-hash-table`
+* `rx/hash-table`
 ```
 Hash table entries: 8
 Large clusters: 0
@@ -162,13 +162,13 @@ Maximum cluster length: 0
 Fragmented entries: 0
 ```
 
-* `tx-summary`
+* `tx/summary`
 ```
 Streams: 1/64
 Track table entries: 8/1024
 ```
 
-* `tx-streams`
+* `tx/streams`
 ```
 Stream #0
   Created by: PID 1126
@@ -187,7 +187,7 @@ Stream #0
 ...
 ```
 
-* `tx-stream-table`
+* `tx/stream-table`
 ```
 Entry #0 (VALID, ACTIVE)
   00000000: 00 00 18 c9 08 00 10 00 53 72 e4 ee 00 00 00 00  ........Sr......
@@ -197,7 +197,7 @@ Entry #0 (VALID, ACTIVE)
 ...
 ```
 
-* `tx-track-table`
+* `tx/track-table`
 ```
            0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09 0x0a 0x0b 0x0c 0x0d 0x0e 0x0f
 -------------------------------------------------------------------------------------------
