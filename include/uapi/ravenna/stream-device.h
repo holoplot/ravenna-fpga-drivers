@@ -172,15 +172,15 @@ struct ra_sd_delete_tx_stream_cmd {
 	__u32 index;
 };
 
-#define RA_SD_READ_RTCP_RX_STAT	_IOW('r', 100, struct ra_sd_read_rtcp_rx_stat_cmd)
-#define RA_SD_READ_RTCP_TX_STAT	_IOW('r', 101, struct ra_sd_read_rtcp_tx_stat_cmd)
+#define RA_SD_READ_RTCP_RX_STAT	_IOW('r', 0x10, struct ra_sd_read_rtcp_rx_stat_cmd)
+#define RA_SD_READ_RTCP_TX_STAT	_IOW('r', 0x10, struct ra_sd_read_rtcp_tx_stat_cmd)
 
-#define RA_SD_ADD_TX_STREAM	_IOW('r', 200, struct ra_sd_add_tx_stream_cmd)
-#define RA_SD_UPDATE_TX_STREAM	_IOW('r', 201, struct ra_sd_update_tx_stream_cmd)
-#define RA_SD_DELETE_TX_STREAM	_IOW('r', 202, struct ra_sd_delete_tx_stream_cmd)
+#define RA_SD_ADD_TX_STREAM	_IOW('r', 0x20, struct ra_sd_add_tx_stream_cmd)
+#define RA_SD_UPDATE_TX_STREAM	_IOW('r', 0x21, struct ra_sd_update_tx_stream_cmd)
+#define RA_SD_DELETE_TX_STREAM	_IOW('r', 0x22, struct ra_sd_delete_tx_stream_cmd)
 
-#define RA_SD_ADD_RX_STREAM	_IOW('r', 300, struct ra_sd_add_rx_stream_cmd)
-#define RA_SD_UPDATE_RX_STREAM	_IOW('r', 301, struct ra_sd_update_rx_stream_cmd)
-#define RA_SD_DELETE_RX_STREAM	_IOW('r', 302, struct ra_sd_delete_rx_stream_cmd)
+#define RA_SD_ADD_RX_STREAM	_IOW('r', 0x30, struct ra_sd_add_rx_stream_cmd)
+#define RA_SD_UPDATE_RX_STREAM	_IOW('r', 0x31, struct ra_sd_update_rx_stream_cmd)
+#define RA_SD_DELETE_RX_STREAM	_IOW('r', 0x32, struct ra_sd_delete_rx_stream_cmd)
 
 #endif /* _UAPI_RAVENNA_STREAM_DEVICE_H */
