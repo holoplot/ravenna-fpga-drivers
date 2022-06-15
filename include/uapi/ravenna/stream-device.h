@@ -172,7 +172,7 @@ struct ra_sd_delete_tx_stream_cmd {
 };
 
 #define RA_SD_READ_RTCP_RX_STAT	_IOW('r', 0x10, struct ra_sd_read_rtcp_rx_stat_cmd)
-#define RA_SD_READ_RTCP_TX_STAT	_IOW('r', 0x10, struct ra_sd_read_rtcp_tx_stat_cmd)
+#define RA_SD_READ_RTCP_TX_STAT	_IOW('r', 0x11, struct ra_sd_read_rtcp_tx_stat_cmd)
 
 #define RA_SD_ADD_TX_STREAM	_IOW('r', 0x20, struct ra_sd_add_tx_stream_cmd)
 #define RA_SD_UPDATE_TX_STREAM	_IOW('r', 0x21, struct ra_sd_update_tx_stream_cmd)
