@@ -70,12 +70,9 @@ static int add_rx_stream(int fd, int x)
 		.stream = rx_stream,
 	};
 
-	inet_pton(AF_INET, "238.228.114.83", &cmd.stream.primary.destination_ip);
-	inet_pton(AF_INET, "192.168.100.1",  &cmd.stream.primary.source_ip);
+	inet_pton(AF_INET, "228.196.73.186", &cmd.stream.primary.destination_ip);
 	cmd.stream.primary.destination_port = htons(5004);
-
 	cmd.stream.primary.destination_ip += x << 24;
-	cmd.stream.primary.source_ip += x << 24;
 
 	for (i = 0; i < cmd.stream.num_channels; i++)
 		cmd.stream.tracks[i] = i + (x * cmd.stream.num_channels);
@@ -93,11 +90,8 @@ static int update_rx_stream(int fd, int x, int index)
 	};
 
 	inet_pton(AF_INET, "238.228.114.83", &cmd.stream.primary.destination_ip);
-	inet_pton(AF_INET, "192.168.100.1",  &cmd.stream.primary.source_ip);
 	cmd.stream.primary.destination_port = htons(5004);
-
 	cmd.stream.primary.destination_ip += x << 24;
-	cmd.stream.primary.source_ip += x << 24;
 
 	cmd.stream.num_channels *= 2;
 

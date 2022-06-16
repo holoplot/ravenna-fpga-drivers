@@ -71,7 +71,6 @@ struct ra_sd_read_rtcp_tx_stat_cmd {
 struct ra_sd_rx_stream {
 	struct ra_sd_rx_stream_interface {
 		__be32 destination_ip;
-		__be32 source_ip;
 		__be16 destination_port;
 		__u8 reserved_0[2];
 	} primary, secondary;

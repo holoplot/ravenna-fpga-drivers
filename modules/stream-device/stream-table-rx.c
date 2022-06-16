@@ -111,11 +111,15 @@ static void ra_stream_table_rx_fill(const struct ra_sd_rx_stream *stream,
 	 * PRI & SEC. Otherwise the hstb will be flooded with identical entries
 	 * for hash(0,0).
 	 */
-	if (fpga->destination_ip_primary == 0)
+	if (fpga->destination_ip_primary == 0) {
 		fpga->destination_ip_primary = fpga->destination_ip_secondary;
+		fpga->destination_port_primary = fpga->destination_port_secondary;
+	}
 
-	if (fpga->destination_ip_secondary == 0)
+	if (fpga->destination_ip_secondary == 0) {
 		fpga->destination_ip_secondary = fpga->destination_ip_primary;
+		fpga->destination_port_secondary = fpga->destination_port_primary;
+	}
 
 	fpga->num_channels = stream->num_channels;
 	fpga->rtp_offset = stream->rtp_offset;

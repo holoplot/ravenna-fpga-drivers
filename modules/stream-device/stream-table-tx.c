@@ -254,9 +254,9 @@ int ra_stream_table_tx_probe(struct device *dev,
 			     struct device_node *np,
 			     struct ra_stream_table_tx *sttb)
 {
-	int ret;
-	struct resource res;
 	resource_size_t size;
+	struct resource res;
+	int ret;
 
 	BUILD_BUG_ON(sizeof(struct ra_stream_table_tx_fpga) != 0x40);
 

@@ -233,7 +233,6 @@ DEFINE_SHOW_ATTRIBUTE(ra_sd_rx_summary);
 static void ra_sd_rx_print_interface(struct seq_file *s,
 				     struct ra_sd_rx_stream_interface *i)
 {
-	seq_printf(s, "    Source: %pI4\n", &i->source_ip);
 	seq_printf(s, "    Destination: %pI4:%d\n",
 		   &i->destination_ip, be16_to_cpu(i->destination_port));
 }
@@ -254,12 +253,12 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 
 		seq_printf(s, "  Created by: PID %d\n", pid_vnr(e->pid));
 
-		if (st->primary.source_ip != 0) {
+		if (st->primary.destination_ip != 0) {
 			seq_printf(s, "  Primary network\n");
 			ra_sd_rx_print_interface(s, &st->primary);
 		}
 
-		if (st->secondary.source_ip != 0) {
+		if (st->secondary.destination_ip != 0) {
 			seq_printf(s, "  Secondary network\n");
 			ra_sd_rx_print_interface(s, &st->secondary);
 		}
