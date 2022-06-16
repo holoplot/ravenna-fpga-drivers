@@ -6,6 +6,8 @@
 #include <linux/io.h>
 #include <linux/seq_file.h>
 
+#define RA_TRACK_TABLE_MUTE 0x100
+
 struct ra_track_table {
 	void __iomem	*regs;
 	unsigned long	*used_entries;

@@ -5,8 +5,6 @@
 
 #include "track-table.h"
 
-#define RA_TRACK_TABLE_MUTE 0x100
-
 int ra_track_table_alloc(struct ra_track_table *trtb, int n_channels)
 {
 	unsigned long start;

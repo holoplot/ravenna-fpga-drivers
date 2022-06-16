@@ -66,7 +66,10 @@ static void ra_sd_track_table_dump(struct ra_track_table *trtb,
 
 
 		if (test_bit(i, trtb->used_entries))
-			seq_printf(s, " %3d ", track);
+			if (track & RA_TRACK_TABLE_MUTE)
+				seq_printf(s, "  X  ");
+			else
+				seq_printf(s, " %3d ", track);
 		else
 			seq_puts(s, "  -  ");
 
@@ -78,6 +81,26 @@ static void ra_sd_track_table_dump(struct ra_track_table *trtb,
 }
 
 /* TX */
+
+static void ra_sd_dump_tracks(struct seq_file *s,
+			      const __s16 *tracks,
+			      int num_channels)
+{
+	int i, j;
+
+	seq_printf(s, "  Channel -> Track association:");
+	for (i = 0, j = 0; i < num_channels; i++) {
+		if (tracks[i] < 0)
+			continue;
+
+		if (j++ % 8 == 0)
+			seq_puts(s, "\n    ");
+
+		seq_printf(s, "   %3d -> %3d", i, tracks[i]);
+	}
+
+	seq_puts(s, "\n");
+}
 
 static int ra_sd_tx_summary_show(struct seq_file *s, void *p)
 {
@@ -123,7 +146,6 @@ static int ra_sd_tx_streams_show(struct seq_file *s, void *p)
 	struct ra_sd_priv *priv = s->private;
 	struct ra_sd_tx_stream_elem *e;
 	unsigned long index;
-	int i;
 
 	mutex_lock(&priv->tx.mutex);
 
@@ -158,15 +180,9 @@ static int ra_sd_tx_streams_show(struct seq_file *s, void *p)
 
 		seq_printf(s, "  Track table entry: %d\n", e->trtb_index);
 
-		seq_printf(s, "  Channel -> Track association:");
-		for (i = 0; i < st->num_channels; i++) {
-			if (i % 8 == 0)
-				seq_puts(s, "\n    ");
+		ra_sd_dump_tracks(s, st->tracks, st->num_channels);
 
-			seq_printf(s, "   %3d -> %3d", i, st->tracks[i]);
-		}
-
-		seq_puts(s, "\n\n");
+		seq_puts(s, "\n");
 	}
 
 	mutex_unlock(&priv->tx.mutex);
@@ -237,7 +253,6 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 	struct ra_sd_priv *priv = s->private;
 	struct ra_sd_rx_stream_elem *e;
 	unsigned long index;
-	int i;
 
 	mutex_lock(&priv->rx.mutex);
 
@@ -279,15 +294,9 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 
 		seq_printf(s, "  Track table entry: %d\n", e->trtb_index);
 
-		seq_printf(s, "  Channel -> Track association:");
-		for (i = 0; i < st->num_channels; i++) {
-			if (i % 8 == 0)
-				seq_puts(s, "\n    ");
+		ra_sd_dump_tracks(s, st->tracks, st->num_channels);
 
-			seq_printf(s, "   %3d -> %3d", i, st->tracks[i]);
-		}
-
-		seq_puts(s, "\n\n");
+		seq_puts(s, "\n");
 	}
 
 	mutex_unlock(&priv->rx.mutex);
@@ -376,7 +385,7 @@ int ra_sd_debugfs_init(struct ra_sd_priv *priv)
 	debugfs_create_file("summary", 0444, tx, priv, &ra_sd_tx_summary_fops);
 	debugfs_create_file("streams", 0444, tx, priv, &ra_sd_tx_streams_fops);
 	debugfs_create_file("stream-table", 0444, tx, priv, &ra_sd_tx_stream_table_fops);
-	debugfs_create_file("tx-track-table", 0444, tx, priv, &ra_sd_tx_track_table_fops);
+	debugfs_create_file("track-table", 0444, tx, priv, &ra_sd_tx_track_table_fops);
 
 	return 0;
 }
