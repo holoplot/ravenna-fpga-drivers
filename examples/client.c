@@ -15,7 +15,8 @@ gcc -o client -Wall -I include/ client.c
 
 #include <uapi/ravenna/stream-device.h>
 
-static inline int RET_NERRNO(int ret) {
+static inline int RET_NERRNO(int ret)
+{
 	if (ret < 0)
 		return -errno;
 
@@ -28,13 +29,13 @@ static struct ra_sd_rx_stream rx_stream = {
 	.hitless_protection 	= 0,
 	.synchronous 		= 0,
 
-	.rtp_offset 		= 0,
-	.jitter_buffer_margin 	= 0,
+	.rtp_offset 		= 500,
+	.jitter_buffer_margin 	= 500,
 	.rtp_ssrc 		= 0,
-	.rtp_payload_type 	= 97,
+	.rtp_payload_type 	= 98,
 
 	.codec 			= RA_STREAM_CODEC_L24,
-	.num_channels 		= 8,
+	.num_channels 		= 2,
 };
 
 static struct ra_sd_tx_stream tx_stream = {
@@ -141,8 +142,8 @@ static int update_tx_stream(int fd, int x, int index)
 		.stream = tx_stream,
 	};
 
-	inet_pton(AF_INET, "238.228.114.83", &cmd.stream.primary.destination_ip);
-	inet_pton(AF_INET, "192.168.100.1",  &cmd.stream.primary.source_ip);
+	inet_pton(AF_INET, "228.196.73.186", &cmd.stream.primary.destination_ip);
+	inet_pton(AF_INET, "192.168.88.168",  &cmd.stream.primary.source_ip);
 	cmd.stream.primary.destination_port = htons(5004);
 
 	cmd.stream.primary.destination_ip += x << 24;
