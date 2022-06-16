@@ -149,6 +149,8 @@ static int ra_sd_tx_streams_show(struct seq_file *s, void *p)
 
 		seq_printf(s, "  Codec: %s\n", ra_sd_codec_str(st->codec));
 		seq_printf(s, "  RTP payload type: %d\n", st->rtp_payload_type);
+		seq_printf(s, "  RTP offset: %d\n", st->rtp_offset);
+		seq_printf(s, "  RTP SSRC: %d\n", st->rtp_ssrc);
 
 		seq_printf(s, "  Mode: %s%s\n",
 			   st->vlan_tagged	? "VLAN-TAGGED " : "",
@@ -230,13 +232,6 @@ static int ra_sd_rx_summary_show(struct seq_file *s, void *p)
 
 DEFINE_SHOW_ATTRIBUTE(ra_sd_rx_summary);
 
-static void ra_sd_rx_print_interface(struct seq_file *s,
-				     struct ra_sd_rx_stream_interface *i)
-{
-	seq_printf(s, "    Destination: %pI4:%d\n",
-		   &i->destination_ip, be16_to_cpu(i->destination_port));
-}
-
 static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 {
 	struct ra_sd_priv *priv = s->private;
@@ -253,15 +248,15 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 
 		seq_printf(s, "  Created by: PID %d\n", pid_vnr(e->pid));
 
-		if (st->primary.destination_ip != 0) {
-			seq_printf(s, "  Primary network\n");
-			ra_sd_rx_print_interface(s, &st->primary);
-		}
+		if (st->primary.destination_ip != 0)
+			seq_printf(s, "  Primary destination: %pI4:%d\n",
+				   &st->primary.destination_ip,
+				   be16_to_cpu(st->primary.destination_port));
 
-		if (st->secondary.destination_ip != 0) {
-			seq_printf(s, "  Secondary network\n");
-			ra_sd_rx_print_interface(s, &st->secondary);
-		}
+		if (st->secondary.destination_ip != 0)
+			seq_printf(s, "  Secondary destination: %pI4:%d\n",
+				   &st->secondary.destination_ip,
+				   be16_to_cpu(st->secondary.destination_port));
 
 		if (st->vlan_tagged)
 			seq_printf(s, "  VLAN tag: %d\n",
@@ -270,11 +265,15 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 		seq_printf(s, "  Channels: %d\n", st->num_channels);
 		seq_printf(s, "  Codec: %s\n", ra_sd_codec_str(st->codec));
 		seq_printf(s, "  RTP payload type: %d\n", st->rtp_payload_type);
+		seq_printf(s, "  RTP offset: %d\n", st->rtp_offset);
+		seq_printf(s, "  RTP SSRC: %d\n", st->rtp_ssrc);
+		seq_printf(s, "  Jitter buffer margin: %d\n", st->jitter_buffer_margin);
 
-		seq_printf(s, "  Mode: %s%s%s%s\n",
+		seq_printf(s, "  Mode: %s%s%s%s%s\n",
 			   st->sync_source		? "SYNC-SOURCE " : "",
 			   st->vlan_tagged		? "VLAN-TAGGED " : "",
 			   st->hitless_protection	? "HITLESS " 	 : "",
+			   st->rtp_filter		? "RTP-FILTER "  : "",
 			   st->synchronous		? "SYNCHRONOUS " :
 							  "SYNTONOUS ");
 
@@ -358,13 +357,13 @@ int ra_sd_debugfs_init(struct ra_sd_priv *priv)
 		return ret;
 
 	debugfs_create_file("info", 0444, priv->debugfs, priv, &ra_sd_info_fops);
-	debugfs_create_file("decoder", 0444, priv->debugfs, priv, &ra_sd_decoder_fops);
 
 	rx = debugfs_create_dir("rx", priv->debugfs);
 	if (IS_ERR(rx))
 		return PTR_ERR(rx);
 
 	debugfs_create_file("summary", 0444, rx, priv, &ra_sd_rx_summary_fops);
+	debugfs_create_file("decoder", 0444, rx, priv, &ra_sd_decoder_fops);
 	debugfs_create_file("streams", 0444, rx, priv, &ra_sd_rx_streams_fops);
 	debugfs_create_file("stream-table", 0444, rx, priv, &ra_sd_rx_stream_table_fops);
 	debugfs_create_file("track-table", 0444, rx, priv, &ra_sd_rx_track_table_fops);
