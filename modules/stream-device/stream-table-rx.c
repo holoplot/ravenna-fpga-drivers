@@ -24,24 +24,24 @@ struct ra_stream_table_rx_fpga {
 	__u32 destination_ip_primary;		/* 0x00 */
 	__u32 destination_ip_secondary;		/* 0x04 */
 
-	__u16 destination_port_secondary;	/* 0x08 */
-	__u16 destination_port_primary;		/* 0x0a */
+	__u16 destination_port_primary;		/* 0x08 */
+	__u16 destination_port_secondary;	/* 0x0a */
 
-	__u8 num_channels;			/* 0x0f */
-	__u8 reserved_0;			/* 0x0e */
-	__u8 codec;				/* 0x0d */
-	__u8 misc_control;			/* 0x0c */
+	__u8 num_channels;			/* 0x0c */
+	__u8 reserved_0;			/* 0x0d */
+	__u8 codec;				/* 0x0e */
+	__u8 misc_control;			/* 0x0f */
 
 	__u32 rtp_offset;			/* 0x10 */
 
-	__u16 jitter_buffer_margin;		/* 0x16 */
-	__u16 trtp_base_addr;			/* 0x14 */
+	__u16 jitter_buffer_margin;		/* 0x14 */
+	__u16 trtp_base_addr;			/* 0x16 */
 
 	__u32 rtp_ssrc;				/* 0x18 */
 
-	__u8 rtp_payload_type;			/* 0x1f */
-	__u8 rtcp_control;			/* 0x1e */
-	__u16 rtp_filter_vlan_id;		/* 0x1c */
+	__u8 rtp_payload_type;			/* 0x1c */
+	__u8 rtcp_control;			/* 0x1d */
+	__u16 rtp_filter_vlan_id;		/* 0x1e */
 #else /* __BIG_ENDIAN */
 	__u32 destination_ip_primary;		/* 0x00 */
 	__u32 destination_ip_secondary;		/* 0x04 */
@@ -126,6 +126,7 @@ static void ra_stream_table_rx_fill(const struct ra_sd_rx_stream *stream,
 	fpga->trtp_base_addr = trtb_index;
 	fpga->jitter_buffer_margin = stream->jitter_buffer_margin;
 	fpga->rtp_ssrc = stream->rtp_ssrc;
+	fpga->rtp_payload_type = stream->rtp_payload_type;
 
 	fpga->rtp_filter_vlan_id = be16_to_cpu(stream->vlan_tag) & 0x3f;
 	if (stream->rtp_filter)
