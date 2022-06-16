@@ -157,6 +157,9 @@ static int ra_sd_probe(struct platform_device *pdev)
 	/* Reset hash table */
 	ra_sd_iow(priv, RA_SD_RX_HSTB_CLEAR, 0);
 
+	/* Reset counters */
+	ra_sd_iow(priv, RA_SD_COUNTER_RESET, ~0);
+
 	ra_sd_iow(priv, RA_SD_CONFIG,
 		  RA_SD_CONFIG_RTCP_RX | RA_SD_CONFIG_RTCP_TX);
 
