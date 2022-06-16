@@ -127,7 +127,6 @@ struct ra_sd_tx_stream {
 		__be16 source_port;
 		__be16 vlan_tag;
 		__u8 destination_mac[6];
-		__u8 reserved_0[4];
 	} primary, secondary;
 
 	__bool vlan_tagged;
@@ -143,7 +142,7 @@ struct ra_sd_tx_stream {
 	__u8 dscp_tos;
 	__u8 num_samples;
 
-	__u8 reserved_1[1];
+	__u8 reserved_0[1];
 
 	__u16 next_rtp_sequence_num;
 	__u16 num_channels;
