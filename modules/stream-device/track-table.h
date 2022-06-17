@@ -6,7 +6,7 @@
 #include <linux/io.h>
 #include <linux/seq_file.h>
 
-#define RA_TRACK_TABLE_MUTE 0x100
+#define RA_TRACK_TABLE_MUTE BIT(31)
 
 struct ra_track_table {
 	void __iomem	*regs;

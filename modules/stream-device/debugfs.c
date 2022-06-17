@@ -67,7 +67,7 @@ static void ra_sd_track_table_dump(struct ra_track_table *trtb,
 
 		if (test_bit(i, trtb->used_entries))
 			if (track & RA_TRACK_TABLE_MUTE)
-				seq_printf(s, "  X  ");
+				seq_printf(s, "  M  ");
 			else
 				seq_printf(s, " %3d ", track);
 		else
