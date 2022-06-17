@@ -68,7 +68,7 @@ static int ra_sd_rx_tracks_available(const struct ra_sd_rx *rx,
 {
 	int i;
 
-	FOR_EACH_TRACK(i, stream->num_channels, stream->tracks)
+	ra_for_each_active_track(i, stream->num_channels, stream->tracks)
 		if (test_bit(stream->tracks[i], rx->used_tracks))
 			return -EBUSY;
 
@@ -80,7 +80,7 @@ static void ra_sd_rx_tracks_mark_used(struct ra_sd_rx *rx,
 {
 	int i;
 
-	FOR_EACH_TRACK(i, stream->num_channels, stream->tracks)
+	ra_for_each_active_track(i, stream->num_channels, stream->tracks)
 		set_bit(stream->tracks[i], rx->used_tracks);
 }
 
@@ -89,7 +89,7 @@ static void ra_sd_rx_tracks_mark_unused(struct ra_sd_rx *rx,
 {
 	int i;
 
-	FOR_EACH_TRACK(i, stream->num_channels, stream->tracks)
+	ra_for_each_active_track(i, stream->num_channels, stream->tracks)
 		clear_bit(stream->tracks[i], rx->used_tracks);
 }
 

@@ -39,7 +39,7 @@ static inline int ra_stream_find_used_track(int start, int n_channels,
 	return i;
 }
 
-#define FOR_EACH_TRACK(i,n_channels,tracks)				\
+#define ra_for_each_active_track(i,n_channels,tracks) \
 	for (i = ra_stream_find_used_track(0, (n_channels), (tracks));	\
 	     i < (n_channels);						\
 	     i = ra_stream_find_used_track((i) + 1, (n_channels), (tracks)))
