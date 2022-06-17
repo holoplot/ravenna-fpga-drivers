@@ -56,43 +56,7 @@ struct ra_stream_table_tx_fpga {
 	__u32 rtp_offset;			/* 0x38 */
 	__u32 rtp_ssrc;				/* 0x3c */
 #else /* __BIG_ENDIAN */
-	__u8 misc_control;			/* 0x00 */
-	__u8 codec;				/* 0x01 */
-	__u16 trtp_base_addr;			/* 0x02 */
-	__u8 reserved_0;			/* 0x04 */
-	__u8 num_samples;			/* 0x05 */
-	__u8 reserved_1;			/* 0x06 */
-	__u8 num_channels;			/* 0x07 */
-
-	__u32 destination_ip_primary;		/* 0x08 */
-	__u32 destination_ip_secondary;		/* 0x0c */
-
-	__u32 destination_mac_primary_msb;	/* 0x10 */
-	__u16 destination_mac_primary_lsb;	/* 0x14 */
-	__u16 destination_mac_secondary_msb;	/* 0x16 */
-	__u32 destination_mac_secondary_lsb;	/* 0x18 */
-
-	__u16 vlan_tag_secondary;		/* 0x1c */
-	__u16 vlan_tag_primary;			/* 0x1e */
-
-	__u8 ttl;				/* 0x20 */
-	__u8 dscp_tos;				/* 0x21 */
-	__u16 ip_total_len;			/* 0x22 */
-
-	__u32 source_ip_primary;		/* 0x24 */
-	__u32 source_ip_secondary;		/* 0x28 */
-
-	__u16 source_port_primary;		/* 0x2c */
-	__u16 destination_port_primary;		/* 0x2e */
-	__u16 source_port_secondary;		/* 0x30 */
-	__u16 destination_port_secondary;	/* 0x32 */
-
-	__u16 next_rtp_sequence_num;		/* 0x34 */
-	__u8 rtp_payload_type;			/* 0x36 */
-	__u8 next_rtp_tx_time;			/* 0x37 */
-
-	__u32 rtp_offset;			/* 0x38 */
-	__u32 rtp_ssrc;				/* 0x3c */
+#error Big Endian platforms are unsupported
 #endif
 } __packed;
 

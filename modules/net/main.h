@@ -22,12 +22,7 @@ struct ptp_packet_fpga_timestamp
 	u16 sequence_id;
 	u16 reserved;
 #else /* __ BIG_ENDIAN */
-	u16 start_of_ts;
-	u16 seconds_hi;
-	u32 seconds;
-	u32 nanoseconds;
-	u16 reserved;
-	u16 sequence_id;
+#error Big Endian platforms are unsupported
 #endif
 } __packed;
 

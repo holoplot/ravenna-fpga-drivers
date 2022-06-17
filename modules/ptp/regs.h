@@ -9,8 +9,7 @@ struct ra_ptp_extts_fpga_timestamp {
 	u16 start_of_ts;
 	u16 seconds_hi;
 #else /* __ BIG_ENDIAN */
-	u16 seconds_hi;
-	u16 start_of_ts;
+#error Big Endian platforms are unsupported
 #endif
 	u32 seconds;
 	u32 nanoseconds;
