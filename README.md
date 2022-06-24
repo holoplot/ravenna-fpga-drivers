@@ -74,6 +74,7 @@ This driver supports the network interfaces and exposed them as Linux network in
         reg = <0x0 0xa0180000 0x0 0x1000>;
 
         interrupt-parent = <&ravenna_irq>;
+        interrupt-names = "pp";
         interrupts = <8>;
 
         phy-handle = <&ra0_phy>;

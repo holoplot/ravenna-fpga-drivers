@@ -133,7 +133,7 @@ static ssize_t udp_filter_port_store(struct device *dev,
 	if (ret < 0)
 		return ret;
 
-	if (v >= 0xffff)
+	if (v > 0xffff)
 		return -EINVAL;
 
 	if (v > 0)

@@ -130,7 +130,7 @@ int ra_net_mdio_init(struct ra_net_priv *priv);
 
 void ra_net_tx_ts_irq(struct ra_net_priv *priv);
 void ra_net_flush_tx_ts(struct ra_net_priv *priv);
-bool ra_net_tx_ts_send(struct ra_net_priv *priv, struct sk_buff *skb);
+bool ra_net_tx_ts_queue(struct ra_net_priv *priv, struct sk_buff *skb);
 void ra_net_tx_ts_init(struct ra_net_priv *priv);
 int ra_net_hwtstamp_ioctl(struct net_device *ndev,
 			  struct ifreq *ifr, int cmd);
