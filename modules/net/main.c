@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-// #define DEBUG 1
+//#define DEBUG 1
 
 #include <linux/clk.h>
 #include <linux/delay.h>
@@ -53,7 +53,7 @@ static int ra_net_napi_poll(struct napi_struct *napi, int budget)
 		/* FPGA does IP checksum offload for receive packets */
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-		if (0 && status & RA_NET_RX_STATE_PACKET_HAS_PTP_TS) {
+		if (status & RA_NET_RX_STATE_PACKET_HAS_PTP_TS) {
 			struct ptp_packet_fpga_timestamp packet_ts;
 
 			BUILD_BUG_ON(!IS_ALIGNED(sizeof(packet_ts), sizeof(u32)));
@@ -116,7 +116,6 @@ static irqreturn_t ra_net_irqhandler(int irq, void *dev_id)
 	}
 
 	if (irqs & RA_NET_IRQ_TX_SPACE_AVAILABLE) {
-		// disable interrupt, no further ACK is necessary
 		ra_net_irq_disable(priv, RA_NET_IRQ_TX_SPACE_AVAILABLE);
 
 		if (netif_queue_stopped(ndev))
@@ -124,13 +123,12 @@ static irqreturn_t ra_net_irqhandler(int irq, void *dev_id)
 	}
 
 	if (irqs & RA_NET_IRQ_TX_EMPTY) {
-		/* NOthing to do */
+		/* Nothing to do */
 		ra_net_irq_disable(priv, RA_NET_IRQ_TX_EMPTY);
 	}
 
-	if (pp_irqs & RA_NET_PP_IRQ_PTP_TX_TS_IRQ_AVAILABLE) {
+	if (pp_irqs & RA_NET_PP_IRQ_PTP_TX_TS_IRQ_AVAILABLE)
 		ra_net_tx_ts_irq(priv);
-	}
 
 	return IRQ_HANDLED;
 }
@@ -142,20 +140,10 @@ static int ra_net_init(struct net_device *ndev)
 	u32 mac_features;
 
 	mac_features = ra_net_ior(priv, RA_NET_MAC_FEATURES);
-	if (mac_features & RA_NET_MAC_FEATURE_VLAN) {
+	if (mac_features & RA_NET_MAC_FEATURE_VLAN)
 		ndev->features |= NETIF_F_HW_VLAN_CTAG_FILTER;
-
-		/*
-		 * field to get information (e.g. by ethtool),
-		 * which features can be switched on/off.
-		 * At the moment, VLAN handling is always on
-		 * If we want to change this, the corresponding
-		 * "xxx_fix_features()" callbacks have to be implemented
-		 */
-		//dev->hw_features |= NETIF_F_HW_VLAN_CTAG_FILTER;
-	} else {
+	else
 		dev_info(dev, "device does not support VLAN filtering\n");
-	}
 
 	return 0;
 }
@@ -221,7 +209,7 @@ static int ra_net_open(struct net_device *ndev)
 	napi_enable(&priv->napi);
 
 	ra_net_irq_enable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE |
-			      RA_NET_IRQ_RX_OVERRUN);
+				RA_NET_IRQ_RX_OVERRUN);
 
 	netif_carrier_on(ndev);
 	netif_start_queue(ndev);
@@ -250,11 +238,10 @@ static int ra_net_stop(struct net_device *ndev)
 static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
-	bool free_skb = false, short_packet = false;
+	bool free_skb = true, short_packet = false;
 	struct device *dev = priv->dev;
 	unsigned int len = skb->len;
 	unsigned int aligned_len;
-	unsigned long flags;
 	int ret = 0;
 	u32 free;
 	u8 *buf, *tmp_buf = NULL;
@@ -287,8 +274,8 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	 */
 	if ((skb_headroom(skb) < RA_NET_TX_PADDING_BYTES) ||
 	    (short_packet && (skb_tailroom(skb) < (ETH_ZLEN - skb->len)))) {
-		net_info_ratelimited("%s: skb->data needs copy, because skb_headroom(%i < %i) "
-				     "or skb_tailroom(%i < %i) is too small\n",
+		net_info_ratelimited("%s: skb->data needs copy, because skb_headroom (%i < %i) "
+				     "or skb_tailroom (%i < %i) is too small\n",
 				     ndev->name,
 				     skb_headroom(skb), RA_NET_TX_PADDING_BYTES,
 				     skb_tailroom(skb), (ETH_ZLEN - skb->len));
@@ -299,11 +286,11 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 			goto out;
 		}
 
-		// FPGA wants 2 bytes padding before data to insert packet length
+		/* FPGA wants 2 bytes padding before data to insert packet length */
 		memcpy(tmp_buf + RA_NET_TX_PADDING_BYTES, skb->data, skb->len);
 		buf = tmp_buf;
 	} else {
-		// shift begin of data 2 bytes left, the FPGA inserts packet length
+		/* shift begin of data 2 bytes left, the FPGA inserts packet length */
 		buf = (u8 *)skb->data - RA_NET_TX_PADDING_BYTES;
 	}
 
@@ -312,7 +299,6 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	spin_lock(&priv->lock);
 
 	free = ra_net_ior(priv, RA_NET_TX_STATE) & RA_NET_TX_STATE_SPACE_AVAILABLE_MASK;
-
 	if (free < aligned_len) {
 		ret = -ENOSPC;
 		goto out_unlock;
@@ -327,12 +313,16 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	ndev->stats.tx_packets++;
 	ndev->stats.tx_bytes += len;
 
+	dev_dbg(dev, "Transmitting packet: len = %d; aligned = %d\n",
+		len, aligned_len);
+
 	ra_net_iow_rep(priv, RA_NET_TX_FIFO, buf, aligned_len);
 
-	free_skb = ra_net_tx_ts_send(priv, skb);
-	if (free_skb)
-		// tell fpga to timestamp this packet
+	if (ra_net_tx_ts_queue(priv, skb)) {
+		/* tell FPGA to timestamp this packet */
 		len |= RA_NET_TX_CONFIG_TIMESTAMP_PACKET;
+		free_skb = false;
+	}
 
 	/* start transmission of data */
 	ra_net_iow(priv, RA_NET_TX_CONFIG, len);
@@ -340,8 +330,6 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	/* dummy access needed by FPGA to have enough clock cycles */
 	ra_net_ior(priv, RA_NET_TX_STATE);
 
-	dev_dbg(dev, "Transmitted packet: len = %d; aligned = %d\n",
-		len, aligned_len);
 	// skb_dump(KERN_DEBUG, skb, true);
 
 out_unlock:
@@ -432,7 +420,7 @@ static void ra_net_set_rx_mode(struct net_device *ndev)
 
 		if (netdev_mc_count(ndev) > 1)
 			dev_dbg(priv->dev, "IP_ADD_MEMBERSHIP / IP_DROP_MEMBERSHIP is"
-					 " not supported in this network device.\n");
+					   " not supported in this network device.\n");
 	}
 
 	ra_net_iow(priv, RA_NET_MAC_RX_CTRL, ctrl);
@@ -443,37 +431,28 @@ static void ra_net_set_rx_mode(struct net_device *ndev)
 static int ra_net_do_ioctl(struct net_device *ndev, struct ifreq *rq, int cmd)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
-	int ret;
 
 	if (!netif_running(ndev))
 		return -EINVAL;
 
-	ret = phylink_mii_ioctl(priv->phylink, rq, cmd);
-	if (ret < 0)
-		return ret;
-
 	if (cmd == SIOCSHWTSTAMP)
 		return ra_net_hwtstamp_ioctl(ndev, rq, cmd);
 
-	return 0;
+	return phylink_mii_ioctl(priv->phylink, rq, cmd);
 }
 
 static int ra_net_vlan_rx_add_vid(struct net_device *ndev, __be16 proto, u16 vid)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
-	struct device *dev = priv->dev;
-	u32 array_idx, val;
 
-	dev_dbg(dev, "%s() vid=%d\n", __func__, vid);
+	dev_dbg(priv->dev, "%s() vid=%d\n", __func__, vid);
 
-	array_idx = vid >> 7;   // array index in FPGA (as of "unsigned int vlan_ctrl[]")
+	ra_net_iow_mask(priv, RA_NET_VLAN_CTRL_ARRAY + (vid / 32) * sizeof(u32),
+			BIT(vid % 32), BIT(vid % 32));
 
-	val = ra_net_ior(priv, RA_NET_VLAN_CTRL_ARRAY + array_idx);
-	val |= BIT(vid & 0x1f);
-	ra_net_iow(priv, RA_NET_VLAN_CTRL_ARRAY + array_idx, val);
-
-	// FIXME: VLAN enable bit must be written !!
-	// FIXME: Review if VLAN handling is really implemented in FPGA
+	ra_net_iow_mask(priv, RA_NET_VLAN_CTRL,
+			RA_NET_VLAN_CTRL_VLAN_EN,
+			RA_NET_VLAN_CTRL_VLAN_EN);
 
 	return 0;
 }
@@ -481,19 +460,20 @@ static int ra_net_vlan_rx_add_vid(struct net_device *ndev, __be16 proto, u16 vid
 static int ra_net_vlan_rx_kill_vid(struct net_device *ndev, __be16 proto, u16 vid)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
-	struct device *dev = priv->dev;
-	u32 array_idx, val;
+	int i;
 
-	dev_dbg(dev, "%s() vid = %d\n", __func__, vid);
+	dev_dbg(priv->dev, "%s() vid = %d\n", __func__, vid);
 
-	array_idx = vid >> 7;   // array index in FPGA (as of "unsigned int vlan_ctrl[]")
+	ra_net_iow_mask(priv, RA_NET_VLAN_CTRL_ARRAY + (vid / 32) * sizeof(u32),
+			BIT(vid % 32), 0);
 
-	val = ra_net_ior(priv, RA_NET_VLAN_CTRL_ARRAY + array_idx);
-	val &= ~BIT(vid & 0x1f);
-	ra_net_iow(priv, RA_NET_VLAN_CTRL_ARRAY + array_idx, val);
+	/* Clear VLAN enable bit if bitmap is empty */
 
-	// FIXME: clear VLAN enable bit if no VID is set ?!
-	// FIXME: Review if VLAN handling is really implemented in FPGA
+	for (i = 0; i < 4096/32; i++)
+		if (ra_net_ior(priv, RA_NET_VLAN_CTRL_ARRAY + i * sizeof(u32)))
+			return 0;
+
+	ra_net_iow_mask(priv, RA_NET_VLAN_CTRL, RA_NET_VLAN_CTRL_VLAN_EN, 0);
 
 	return 0;
 }
@@ -519,7 +499,7 @@ static const struct net_device_ops ra_net_netdev_ops =
 	.ndo_start_xmit		= ra_net_start_xmit,
 	.ndo_tx_timeout		= ra_net_tx_timeout,
 	.ndo_set_rx_mode	= ra_net_set_rx_mode,
-	.ndo_do_ioctl		= ra_net_do_ioctl,
+	.ndo_eth_ioctl		= ra_net_do_ioctl,
 	.ndo_validate_addr	= eth_validate_addr,
 	.ndo_vlan_rx_add_vid	= ra_net_vlan_rx_add_vid,
 	.ndo_vlan_rx_kill_vid	= ra_net_vlan_rx_kill_vid,
@@ -566,7 +546,7 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 	ra_net_irq_disable(priv, ~0);
 	ra_net_pp_irq_disable(priv, ~0);
 
-	irq = of_irq_get(node, 0);
+	irq = of_irq_get_byname(node, "pp");
 	ret = devm_request_irq(dev, irq, ra_net_irqhandler, IRQF_SHARED,
 			       dev_name(dev), priv);
 	if (ret < 0) {
@@ -635,6 +615,7 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 	of_property_read_u32(node, "lawo,ptp-delay-path-rx-100mbit-nsec", &tmp);
 	val |= tmp << 16;
 
+	dev_dbg(dev, "RA_NET_PTP_DELAY_ADJUST_1 = 0x%08x\n", val);
 	ra_net_iow(priv, RA_NET_PTP_DELAY_ADJUST_1, val);
 
 	tmp = 0;
@@ -645,6 +626,7 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 	of_property_read_u32(node, "lawo,ptp-delay-path-tx-nsec", &tmp);
 	val |= tmp << 16;
 
+	dev_dbg(dev, "RA_NET_PTP_DELAY_ADJUST_2 = 0x%08x\n", val);
 	ra_net_iow(priv, RA_NET_PTP_DELAY_ADJUST_2, val);
 
 	tmp = 5000;

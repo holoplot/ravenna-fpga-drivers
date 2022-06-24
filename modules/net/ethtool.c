@@ -50,16 +50,20 @@ static int ra_net_ethtool_get_ts_info(struct net_device *ndev,
 
 	dev_dbg(priv->dev, "%s()\n", __func__);
 
-	info->so_timestamping = SOF_TIMESTAMPING_TX_HARDWARE |
-				SOF_TIMESTAMPING_RX_HARDWARE |
-				SOF_TIMESTAMPING_RAW_HARDWARE;
-
 	info->phc_index = priv->phc_index;
-	info->tx_types = (1 << HWTSTAMP_TX_OFF) | (1 << HWTSTAMP_TX_ON);
-	info->rx_filters = (1 << HWTSTAMP_FILTER_NONE) |
-			   (1 << HWTSTAMP_FILTER_PTP_V2_L4_EVENT) |
-			   (1 << HWTSTAMP_FILTER_PTP_V2_L4_SYNC) |
-			   (1 << HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ);
+	info->so_timestamping =
+		SOF_TIMESTAMPING_TX_HARDWARE |
+		SOF_TIMESTAMPING_RX_HARDWARE |
+		SOF_TIMESTAMPING_RAW_HARDWARE;
+	info->tx_types =
+		BIT(HWTSTAMP_TX_OFF) |
+		BIT(HWTSTAMP_TX_ON);
+	info->rx_filters =
+		BIT(HWTSTAMP_FILTER_NONE) |
+		BIT(HWTSTAMP_FILTER_PTP_V2_L4_EVENT) |
+		BIT(HWTSTAMP_FILTER_PTP_V2_L4_SYNC) |
+		BIT(HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ);
+
 	return 0;
 }
 
