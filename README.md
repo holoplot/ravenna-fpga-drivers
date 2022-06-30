@@ -282,6 +282,7 @@ This driver supports the PTP interfaces.
 | `compatible`                           | *         | Must be `lawo,ravenna-ptp`                  |
 | `reg`                                  | *         | Register space                              |
 | `interrupts`, `interrupt-parent`       | *         | Upstream interrupt                          |
+| `lawo,periodic-output-interval-ns`     |           | Periodic output interval, in nanoseconds    |
 
 ### Example DTS binding:
 
@@ -292,5 +293,7 @@ This driver supports the PTP interfaces.
 
         interrupt-parent = <&ravenna_irq>;
         interrupts = <30>;
+
+	lawo,periodic-output-interval-ns = <312500>;
     };
 ```
