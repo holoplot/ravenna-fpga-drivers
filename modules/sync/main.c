@@ -76,6 +76,7 @@ static const struct regmap_config ra_sync_regmap_config = {
 static int ra_sync_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
+	struct device_node *ptp_node;
 	struct ra_sync_priv *priv;
 	struct resource *res;
 	void __iomem *regs;
@@ -88,6 +89,20 @@ static int ra_sync_probe(struct platform_device *pdev)
 
 	mutex_init(&priv->mutex);
 	priv->dev = dev;
+
+	ptp_node = of_parse_phandle(dev->of_node, "lawo,ptp-clock", 0);
+	if (ptp_node) {
+		struct platform_device *ptp_dev;
+		struct ptp_clock *ptp_clock;
+
+		ptp_dev = of_find_device_by_node(ptp_node);
+		if (!ptp_dev)
+			return -EPROBE_DEFER;
+
+		ptp_clock = platform_get_drvdata(ptp_dev);
+		if (!ptp_clock)
+			return -EPROBE_DEFER;
+	}
 
 	regs = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
 	if (IS_ERR(regs))
@@ -102,13 +117,6 @@ static int ra_sync_probe(struct platform_device *pdev)
 			       dev_name(dev), priv);
 	if (ret < 0) {
 		dev_err(dev, "could not request irq: %d\n", ret);
-		return ret;
-	}
-
-	priv->mclk = devm_clk_get(dev, "mclk");
-	if (IS_ERR(priv->mclk)) {
-		ret = PTR_ERR(priv->mclk);
-		dev_err(dev, "could not get mclk: %d\n", ret);
 		return ret;
 	}
 
@@ -130,18 +138,26 @@ static int ra_sync_probe(struct platform_device *pdev)
 	if (ret < 0)
 		return ret;
 
-	ret = ra_sync_debugfs_init(priv);
+	priv->mclk = devm_clk_get(dev, "mclk");
+	if (IS_ERR(priv->mclk)) {
+		ret = PTR_ERR(priv->mclk);
+		dev_err(dev, "could not get mclk: %d\n", ret);
+		return ret;
+	}
+
+	ret = clk_set_rate(priv->mclk, 48000 * 512);
 	if (ret < 0)
 		return ret;
-
-	regmap_write(priv->regmap, RA_SYNC_MAIN_CTRL, 0);
-	// regmap_set_bits(priv->regmap, RA_SYNC_OUT0_CTRL, RA_SYNC_OUT_ENABLE);
 
 	ret = clk_prepare_enable(priv->mclk);
 	if (ret < 0)
 		return ret;
 
 	ret = devm_add_action_or_reset(dev, ra_sync_mclk_disable_unpreprare, priv->mclk);
+	if (ret < 0)
+		return ret;
+
+	ret = ra_sync_debugfs_init(priv);
 	if (ret < 0)
 		return ret;
 
@@ -168,5 +184,5 @@ static struct platform_driver ra_sync_driver =
 module_platform_driver(ra_sync_driver);
 
 MODULE_AUTHOR("Daniel Mack <daniel.mack@holoplot.com");
-MODULE_DESCRIPTION("Ravenna RX driver");
+MODULE_DESCRIPTION("Ravenna sync driver");
 MODULE_LICENSE("GPL");
