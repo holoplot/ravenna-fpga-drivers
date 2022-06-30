@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#define DEBUG 1
+
 #include <linux/cdev.h>
 #include <linux/interrupt.h>
 #include <linux/iopoll.h>
@@ -151,12 +153,14 @@ static int ra_ptp_gettime(struct ptp_clock_info *ptp, struct timespec64 *ts)
 		ts->tv_sec <<= 32ULL;
 		ts->tv_sec |= ra_ptp_ior(priv, RA_PTP_READ_TIME_SECONDS);
 		ts->tv_nsec = ra_ptp_ior(priv, RA_PTP_READ_TIME_NANOSECONDS);
+	} else {
+		dev_err(priv->dev, "Timeout waiting for clock validity\n");
 	}
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	dev_dbg(priv->dev, "%s() tv_sec %lld tv_nsec %ld\n",
-		__func__, ts->tv_sec, ts->tv_nsec);
+	dev_dbg(priv->dev, "%s() tv_sec %lld tv_nsec %ld, ret %d\n",
+		__func__, ts->tv_sec, ts->tv_nsec, ret);
 
 	return ret;
 }
@@ -171,9 +175,9 @@ static int ra_ptp_settime(struct ptp_clock_info *ptp,
 		__func__, ts->tv_sec, ts->tv_nsec);
 
 	spin_lock_irqsave(&priv->lock, flags);
-	ra_ptp_iow(priv, RA_PTP_READ_TIME_SECONDS_H, ts->tv_sec >> 32ULL);
-	ra_ptp_iow(priv, RA_PTP_READ_TIME_SECONDS, ts->tv_sec);
-	ra_ptp_iow(priv, RA_PTP_READ_TIME_NANOSECONDS, ts->tv_nsec);
+	ra_ptp_iow(priv, RA_PTP_SET_TIME_SECONDS_H, ts->tv_sec >> 32ULL);
+	ra_ptp_iow(priv, RA_PTP_SET_TIME_SECONDS, ts->tv_sec);
+	ra_ptp_iow(priv, RA_PTP_SET_TIME_NANOSECONDS, ts->tv_nsec);
 	ra_ptp_cmd(priv, RA_PTP_CMD_WRITE_CLOCK);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
@@ -189,7 +193,7 @@ static int ra_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
 	int sign = 1, ret, res;
 	u32 val = 0;
 
-	dev_dbg(dev, "%s()\n", __func__);
+	dev_dbg(dev, "%s() delta %lld\n", __func__, delta);
 
 	if (delta == 0)
 		return 0;
@@ -228,7 +232,7 @@ static int ra_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
 	ts.tv_nsec += sign * (delta - (res * NSEC_PER_SEC));
 
 	if (ts.tv_nsec < 0) {
-		ts.tv_sec  -= 1;
+		ts.tv_sec--;
 		ts.tv_nsec += NSEC_PER_SEC;
 	}
 
@@ -346,10 +350,13 @@ static void ra_ptp_extts_irq(struct ra_ptp_priv *priv)
 			seconds += (u64)extts.seconds;
 
 			event.timestamp =  seconds * NSEC_PER_SEC;
-			event.timestamp =+ (u64)extts.nanoseconds;
+			event.timestamp += (u64)extts.nanoseconds;
 
 			priv->last_ptp_timestamp = event.timestamp;
 			priv->last_rtp_timestamp = extts.rtp_ts;
+
+			dev_dbg(dev, "%s(): event TS %lld\n",
+				__func__, event.timestamp);
 
 			ptp_clock_event(priv->ptp_clock, &event);
 		} else {
