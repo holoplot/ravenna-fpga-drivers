@@ -17,7 +17,7 @@ struct ra_ptp_extts_fpga_timestamp {
 } __packed;
 
 #define RA_PTP_EXTTS_TIMESTAMP_WORDLEN \
-	ALIGN(sizeof(struct ra_ptp_extts_fpga_timestamp), 4)
+	ALIGN(sizeof(struct ra_ptp_extts_fpga_timestamp), sizeof(u32))
 
 #define RA_PTP_EXTTS_START_OF_TS		0x1588
 #define RA_PTP_EXTTS_MAX_TS_CNT			15
@@ -83,8 +83,8 @@ struct ra_ptp_extts_fpga_timestamp {
 
 #define RA_PTP_EXTTS_MODE			0x004c
 #define RA_PTP_EXTTS_MODE_EVENT_CNT_VALUE_MASK	0x000fffff
-#define RA_PTP_EXTTS_MODE_APPEND_SEQUENCE_CNT	0x40000000 // append sequence id instead of RTP Timestamp at ext. timestamp
-#define RA_PTP_EXTTS_MODE_ENABLE_EXTTS		0x80000000
+#define RA_PTP_EXTTS_MODE_APPEND_SEQUENCE_CNT	BIT(30) // append sequence id instead of RTP Timestamp at ext. timestamp
+#define RA_PTP_EXTTS_MODE_ENABLE_EXTTS		BIT(31)
 
 #define RA_PTP_EXTTS_TS_CNT			0x0050	// number of timestamps in "external timstamp" fifo
 
