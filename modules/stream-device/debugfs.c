@@ -29,7 +29,7 @@ static int ra_sd_decoder_show(struct seq_file *s, void *p)
 
 	seq_printf(s, "RX decoder data dropped counter: %d\n",
 		   ra_sd_ior(priv, RA_SD_CNT_RX_DEC_DROP));
-	seq_printf(s, "RX decoder fifo overflow counter: %d\n",
+	seq_printf(s, "RX decoder FIFO overflow counter: %d\n",
 		   ra_sd_ior(priv, RA_SD_CNT_RX_DEC_FIFO_OVR));
 
 	return 0;

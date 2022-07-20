@@ -53,18 +53,19 @@ This driver supports the network interfaces and exposed them as Linux network in
 
 ### DTS properties
 
-| Property name                          | Mandatory | Description                                 |
-|----------------------------------------|:---------:|---------------------------------------------|
-| `compatible`                           | *         | Must be `lawo,ravenna-ethernet`             |
-| `interrupts`, `interrupt-parent`       | *         | Upstream interrupt                          |
-| `reg`                                  | *         | Register space                              |
-| `phy-handle`                           | *         | PHY handle to use                           |
-| `phy-mode`                             |           | PHY mode to set                             |
-| `lawo-ptp-clock`                       |           | phandle to the Ravenna PTP clock node       |
-| `lawo,ptp-delay-path-rx-1000mbit-nsec` |           | RX path delay in 1000 Mbit/s mode, in nsecs |
-| `lawo,ptp-delay-path-rx-100mbit-nsec`  |           | RX path delay in 100 Mbit/s mode, in nsecs  |
-| `lawo,ptp-delay-path-rx-10mbit-nsec`   |           | RX path delay in 10 Mbit/s mode, in nsecs   |
-| `lawo,ptp-delay-path-tx-nsec`          |           | TX path delay for all modes, in nsecs       |
+| Property name                           | Mandatory | Description                                 |
+|-----------------------------------------|:---------:|---------------------------------------------|
+| `compatible`                            | *         | Must be `lawo,ravenna-ethernet`             |
+| `interrupts`, `interrupt-parent`        | *         | Upstream interrupt                          |
+| `interrupt-names`                       | *         | Must be `pp`                                |
+| `reg`                                   | *         | Register space                              |
+| `phy-handle`                            | *         | PHY handle to use                           |
+| `phy-mode`                              |           | PHY mode to set                             |
+| `lawo-ptp-clock`                        |           | phandle to the Ravenna PTP clock node       |
+| `lawo,ptp-delay-path-rx-1000mbit-nsec`  |           | RX path delay in 1000 Mbit/s mode, in nsecs |
+| `lawo,ptp-delay-path-rx-100mbit-nsec`   |           | RX path delay in 100 Mbit/s mode, in nsecs  |
+| `lawo,ptp-delay-path-rx-10mbit-nsec`    |           | RX path delay in 10 Mbit/s mode, in nsecs   |
+| `lawo,ptp-delay-path-tx-nsec`           |           | TX path delay for all modes, in nsecs       |
 
 ### Example DTS binding:
 
@@ -94,12 +95,12 @@ This driver supports the network interfaces and exposed them as Linux network in
 This driver supports the stream interface, including the StreamTables and
 TrackTables for RX and TX, as well as the RTCP statistics interface.
 
-The driver exposes a chardev in `/dev` which bears the name given in the
+The driver exposes a character device in `/dev` with the name given in the
 corresponding device-tree node.
 
 ### DebugFS entries
 
-* `info` shows information on the driver version and the chanacter device.
+* `info` shows information on the driver version and the character device.
 For instance:
 ```
 Driver version: 5ba23cc
@@ -110,7 +111,7 @@ Device minor: 124
 * `decoder`
 ```
 RX decoder data dropped counter: 0
-RX decoder fifo overflow counter: 2
+RX decoder FIFO overflow counter: 2
 ```
 * `rx/summary`
 ```
@@ -234,7 +235,7 @@ Entry #0 (VALID, ACTIVE)
         interrupt-parent = <&ravenna_irq>;
         interrupts = <16>;
 
-	laow,device-name = "ravenna-stream-device";
+	lawo,device-name = "ravenna-stream-device";
 
         stream-table-tx = <&stream_table_tx_0>;
         track-table-tx = <&track_table_tx_0>;
@@ -264,9 +265,9 @@ Entry #0 (VALID, ACTIVE)
     };
 ```
 
-Note that there are no drivers for the table nodes, they are handled by the
-generic `syscon` kernel core. The maximum entries for the tables are inferred
-through the length of the register space.
+Note that there are no dedicated drivers for the table nodes, they are handled
+by the generic `syscon` kernel core. The maximum entries for the tables are
+inferred through the length of the register space.
 
 ## PTP
 

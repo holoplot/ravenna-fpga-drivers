@@ -269,7 +269,7 @@ static void ra_sd_rx_free_stream(struct ra_sd_rx *rx,
 				 struct ra_sd_rx_stream_elem *e,
 				 int index)
 {
-	dev_dbg(rx->dev, "Deleting RX stream %d", index);
+	dev_dbg(rx->dev, "Deleting RX stream %d\n", index);
 
 	ra_track_table_free(&rx->trtb, e->trtb_index, e->stream.num_channels);
 	ra_sd_rx_tracks_mark_unused(rx, &e->stream);
@@ -299,7 +299,7 @@ int ra_sd_rx_delete_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 
 	e = ra_sd_rx_stream_elem_find_by_index(rx, cmd.index);
 	if (!e) {
-		dev_dbg(rx->dev, "Failed to find RX stream with index %d",
+		dev_dbg(rx->dev, "Failed to find RX stream with index %d\n",
 			cmd.index);
 		ret = -ENOENT;
 		goto out_unlock;
