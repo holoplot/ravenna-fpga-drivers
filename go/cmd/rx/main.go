@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 
 	rsd "github.com/holoplot/ravenna-fpga-drivers/go/stream-device"
@@ -27,6 +29,7 @@ func main() {
 	syncSourceFlag := flag.Bool("sync-source", false, "Use stream as sync source")
 	rtpFilterFlag := flag.Bool("rtp-filter", false, "Use RTP filter")
 	hitlessFlag := flag.Bool("hitless", false, "Hitless protection")
+	trackMapFlag := flag.String("track-map", "", "Comma separated list of tracks to map. Defaults to 1:1 mapping to channels.")
 	flag.Parse()
 
 	consoleWriter := zerolog.ConsoleWriter{
@@ -80,8 +83,24 @@ func main() {
 		rxDesc.VlanTagged = true
 	}
 
-	for i := uint16(0); i < rxDesc.NumChannels; i++ {
-		rxDesc.Tracks[i] = int16(i)
+	if *trackMapFlag == "" {
+		for i := uint16(0); i < rxDesc.NumChannels; i++ {
+			rxDesc.Tracks[i] = int16(i)
+		}
+	} else {
+		for i := uint16(0); i < rxDesc.NumChannels; i++ {
+			rxDesc.Tracks[i] = rsd.TrackNull
+		}
+
+		for i, t := range strings.Split(*trackMapFlag, ",") {
+			if i >= int(rxDesc.NumChannels) {
+				break
+			}
+
+			if n, err := strconv.Atoi(t); err == nil && n < rsd.MaxTracks {
+				rxDesc.Tracks[i] = int16(n)
+			}
+		}
 	}
 
 	_, err = sd.AddRxStream(rxDesc)
@@ -105,6 +124,7 @@ func main() {
 		Bool("synchronous", rxDesc.Synchronous).
 		Bool("sync-source", rxDesc.SyncSource).
 		Bool("hitless", rxDesc.HitlessProtection).
+		Ints16("rx-tracks", rxDesc.Tracks[:rxDesc.NumChannels]).
 		Msg("RX stream added")
 
 	log.Info().Msg("Hit ^C to exit.")
