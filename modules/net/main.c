@@ -428,7 +428,7 @@ static void ra_net_set_rx_mode(struct net_device *ndev)
 	spin_unlock(&priv->reg_lock);
 }
 
-static int ra_net_do_ioctl(struct net_device *ndev, struct ifreq *rq, int cmd)
+static int ra_net_eth_ioctl(struct net_device *ndev, struct ifreq *rq, int cmd)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
 
@@ -499,7 +499,7 @@ static const struct net_device_ops ra_net_netdev_ops =
 	.ndo_start_xmit		= ra_net_start_xmit,
 	.ndo_tx_timeout		= ra_net_tx_timeout,
 	.ndo_set_rx_mode	= ra_net_set_rx_mode,
-	.ndo_eth_ioctl		= ra_net_do_ioctl,
+	.ndo_eth_ioctl		= ra_net_eth_ioctl,
 	.ndo_validate_addr	= eth_validate_addr,
 	.ndo_vlan_rx_add_vid	= ra_net_vlan_rx_add_vid,
 	.ndo_vlan_rx_kill_vid	= ra_net_vlan_rx_kill_vid,
