@@ -141,7 +141,7 @@ struct ra_sd_tx_stream {
 	__u8 dscp_tos;
 	__u8 num_samples;
 
-	__u8 reserved_0[1];
+	__u8 reserved_0[2];
 
 	__u16 next_rtp_sequence_num;
 	__u16 num_channels;
