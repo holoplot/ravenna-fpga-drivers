@@ -74,8 +74,8 @@ func main() {
 	}
 
 	if len(*secondaryIpFlag) > 0 {
-		rxDesc.Primary.DestinationIP = net.ParseIP(*secondaryIpFlag)
-		rxDesc.Primary.DestinationPort = uint16(*secondaryPortFlag)
+		rxDesc.Secondary.DestinationIP = net.ParseIP(*secondaryIpFlag)
+		rxDesc.Secondary.DestinationPort = uint16(*secondaryPortFlag)
 	}
 
 	if *vlanTagFlag >= 0 {
