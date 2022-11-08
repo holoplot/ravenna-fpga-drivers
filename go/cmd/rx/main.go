@@ -69,13 +69,17 @@ func main() {
 	}
 
 	if len(*primaryIpFlag) > 0 {
-		rxDesc.Primary.DestinationIP = net.ParseIP(*primaryIpFlag)
-		rxDesc.Primary.DestinationPort = uint16(*primaryPortFlag)
+		rxDesc.PrimaryDestination = net.UDPAddr{
+			IP:   net.ParseIP(*primaryIpFlag),
+			Port: *primaryPortFlag,
+		}
 	}
 
 	if len(*secondaryIpFlag) > 0 {
-		rxDesc.Secondary.DestinationIP = net.ParseIP(*secondaryIpFlag)
-		rxDesc.Secondary.DestinationPort = uint16(*secondaryPortFlag)
+		rxDesc.SecondaryDestination = net.UDPAddr{
+			IP:   net.ParseIP(*secondaryIpFlag),
+			Port: *secondaryPortFlag,
+		}
 	}
 
 	if *vlanTagFlag >= 0 {
@@ -112,10 +116,10 @@ func main() {
 
 	log.Info().
 		Int("channels", int(rxDesc.NumChannels)).
-		IPAddr("primary-ip", rxDesc.Primary.DestinationIP).
-		Int("primary-port", int(rxDesc.Primary.DestinationPort)).
-		IPAddr("secondary-ip", rxDesc.Secondary.DestinationIP).
-		Int("secondary-port", int(rxDesc.Secondary.DestinationPort)).
+		IPAddr("primary-ip", rxDesc.PrimaryDestination.IP).
+		Int("primary-port", int(rxDesc.PrimaryDestination.Port)).
+		IPAddr("secondary-ip", rxDesc.SecondaryDestination.IP).
+		Int("secondary-port", int(rxDesc.SecondaryDestination.Port)).
 		Int("jitter-buffer-margin", int(rxDesc.JitterBufferMargin)).
 		Int("rtp-offset", int(rxDesc.RtpOffset)).
 		Int("rtp-ssrc", int(rxDesc.RtpSsrc)).

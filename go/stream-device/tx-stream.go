@@ -13,10 +13,9 @@ type TxStream struct {
 }
 
 type TxStreamDescriptionNetworkInterface struct {
-	DestinationIP, SourceIP     net.IP
-	DestinationPort, SourcePort uint16
-	VlanTag                     uint16
-	DestinationMAC              net.HardwareAddr
+	Destination, Source net.UDPAddr
+	VlanTag             uint16
+	DestinationMAC      net.HardwareAddr
 }
 
 type TxStreamDescription struct {
@@ -47,17 +46,17 @@ type TxStreamDescription struct {
 func (sd *TxStreamDescription) toIoctlStruct() []byte {
 	buf := new(bytes.Buffer)
 
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Primary.DestinationIP))
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Primary.SourceIP))
-	binary.Write(buf, binary.BigEndian, sd.Primary.DestinationPort)
-	binary.Write(buf, binary.BigEndian, sd.Primary.SourcePort)
+	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Primary.Destination.IP))
+	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Primary.Source.IP))
+	binary.Write(buf, binary.BigEndian, uint16(sd.Primary.Destination.Port))
+	binary.Write(buf, binary.BigEndian, uint16(sd.Primary.Source.Port))
 	binary.Write(buf, binary.BigEndian, sd.Primary.VlanTag)
 	binary.Write(buf, binary.BigEndian, macToBytes(sd.Primary.DestinationMAC))
 
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Secondary.DestinationIP))
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Secondary.SourceIP))
-	binary.Write(buf, binary.BigEndian, sd.Secondary.DestinationPort)
-	binary.Write(buf, binary.BigEndian, sd.Secondary.SourcePort)
+	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Secondary.Destination.IP))
+	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Secondary.Source.IP))
+	binary.Write(buf, binary.BigEndian, uint16(sd.Secondary.Destination.Port))
+	binary.Write(buf, binary.BigEndian, uint16(sd.Secondary.Source.Port))
 	binary.Write(buf, binary.BigEndian, sd.Secondary.VlanTag)
 	binary.Write(buf, binary.BigEndian, macToBytes(sd.Secondary.DestinationMAC))
 

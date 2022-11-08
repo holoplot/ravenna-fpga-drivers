@@ -12,13 +12,8 @@ type RxStream struct {
 	description RxStreamDescription
 }
 
-type RxStreamDescriptionNetworkInterface struct {
-	DestinationIP   net.IP
-	DestinationPort uint16
-}
-
 type RxStreamDescription struct {
-	Primary, Secondary RxStreamDescriptionNetworkInterface
+	PrimaryDestination, SecondaryDestination net.UDPAddr
 
 	SyncSource        bool
 	VlanTagged        bool
@@ -42,12 +37,12 @@ type RxStreamDescription struct {
 func (sd *RxStreamDescription) toIoctlStruct() []byte {
 	buf := new(bytes.Buffer)
 
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Primary.DestinationIP))
-	binary.Write(buf, binary.BigEndian, sd.Primary.DestinationPort)
+	binary.Write(buf, binary.BigEndian, ipToBytes(sd.PrimaryDestination.IP))
+	binary.Write(buf, binary.BigEndian, uint16(sd.PrimaryDestination.Port))
 	binary.Write(buf, binary.LittleEndian, [2]uint8{0}) // padding
 
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Secondary.DestinationIP))
-	binary.Write(buf, binary.BigEndian, sd.Secondary.DestinationPort)
+	binary.Write(buf, binary.BigEndian, ipToBytes(sd.SecondaryDestination.IP))
+	binary.Write(buf, binary.BigEndian, uint16(sd.SecondaryDestination.Port))
 	binary.Write(buf, binary.LittleEndian, [2]uint8{0}) // padding
 
 	binary.Write(buf, binary.LittleEndian, sd.SyncSource)

@@ -71,24 +71,24 @@ func main() {
 	}
 
 	if len(*primaryDestinationIpFlag) > 0 || len(*primarySourceIpFlag) > 0 {
-		txDesc.Primary.DestinationIP = net.ParseIP(*primaryDestinationIpFlag)
-		txDesc.Primary.SourceIP = net.ParseIP(*primarySourceIpFlag)
-		txDesc.Primary.DestinationPort = uint16(*primaryDestinationPortFlag)
-		txDesc.Primary.SourcePort = uint16(*primarySourcePortFlag)
+		txDesc.Primary.Destination.IP = net.ParseIP(*primaryDestinationIpFlag)
+		txDesc.Primary.Source.IP = net.ParseIP(*primarySourceIpFlag)
+		txDesc.Primary.Destination.Port = *primaryDestinationPortFlag
+		txDesc.Primary.Source.Port = *primarySourcePortFlag
 		txDesc.Primary.VlanTag = uint16(*primaryVlanTagFlag)
 		txDesc.UsePrimary = true
 	}
 
 	if len(*secondaryDestinationIpFlag) > 0 || len(*secondarySourceIpFlag) > 0 {
-		txDesc.Secondary.DestinationIP = net.ParseIP(*secondaryDestinationIpFlag)
-		txDesc.Secondary.SourceIP = net.ParseIP(*secondarySourceIpFlag)
-		txDesc.Secondary.DestinationPort = uint16(*secondaryDestinationPortFlag)
-		txDesc.Secondary.SourcePort = uint16(*secondarySourcePortFlag)
+		txDesc.Secondary.Destination.IP = net.ParseIP(*secondaryDestinationIpFlag)
+		txDesc.Secondary.Source.IP = net.ParseIP(*secondarySourceIpFlag)
+		txDesc.Secondary.Destination.Port = *secondaryDestinationPortFlag
+		txDesc.Secondary.Source.Port = *secondarySourcePortFlag
 		txDesc.Secondary.VlanTag = uint16(*secondaryVlanTagFlag)
 		txDesc.UseSecondary = true
 	}
 
-	txDesc.Multicast = txDesc.Primary.DestinationIP.IsMulticast() || txDesc.Secondary.DestinationIP.IsMulticast()
+	txDesc.Multicast = txDesc.Primary.Destination.IP.IsMulticast() || txDesc.Secondary.Destination.IP.IsMulticast()
 	txDesc.VlanTagged = txDesc.Primary.VlanTag > 0 || txDesc.Secondary.VlanTag > 0
 
 	if *trackMapFlag == "" {
@@ -124,12 +124,12 @@ func main() {
 		Int("ttl", int(txDesc.Ttl)).
 		Bool("primary", txDesc.UsePrimary).
 		Bool("secondary", txDesc.UseSecondary).
-		IPAddr("primary-destination-ip", txDesc.Primary.DestinationIP).
-		IPAddr("primary-source-ip", txDesc.Primary.SourceIP).
-		Int("primary-port", int(txDesc.Primary.DestinationPort)).
-		IPAddr("secondary-destination-ip", txDesc.Secondary.DestinationIP).
-		IPAddr("secondary-source-ip", txDesc.Secondary.SourceIP).
-		Int("secondary-port", int(txDesc.Secondary.DestinationPort)).
+		IPAddr("primary-destination-ip", txDesc.Primary.Destination.IP).
+		IPAddr("primary-source-ip", txDesc.Primary.Source.IP).
+		Int("primary-port", int(txDesc.Primary.Destination.Port)).
+		IPAddr("secondary-destination-ip", txDesc.Secondary.Destination.IP).
+		IPAddr("secondary-source-ip", txDesc.Secondary.Source.IP).
+		Int("secondary-port", int(txDesc.Secondary.Destination.Port)).
 		Int("primary-vlan", int(txDesc.Primary.VlanTag)).
 		Int("secondary-vlan", int(txDesc.Secondary.VlanTag)).
 		Int("rtp-offset", int(txDesc.RtpOffset)).
