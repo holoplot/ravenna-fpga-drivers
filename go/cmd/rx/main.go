@@ -68,11 +68,37 @@ func main() {
 		NumChannels: uint16(*channelsFlag),
 	}
 
+	listenMulticast := func(ifiName string, addr net.UDPAddr) {
+		if ifi, err := net.InterfaceByName(ifiName); err == nil {
+			if _, err := net.ListenMulticastUDP("udp4", ifi, &addr); err == nil {
+				log.Info().
+					Str("interface", ifiName).
+					IPAddr("ip", addr.IP).
+					Int("port", addr.Port).
+					Msg("Listening")
+			} else {
+				log.Error().
+					Err(err).
+					Str("interface", ifiName).
+					IPAddr("ip", addr.IP).
+					Int("port", addr.Port).
+					Msg("Cannot listen")
+			}
+		} else {
+			log.Error().
+				Err(err).
+				Str("interface", ifiName).
+				Msg("Unable to lookup network interface")
+		}
+	}
+
 	if len(*primaryIpFlag) > 0 {
 		rxDesc.PrimaryDestination = net.UDPAddr{
 			IP:   net.ParseIP(*primaryIpFlag),
 			Port: *primaryPortFlag,
 		}
+
+		listenMulticast("ra0", rxDesc.PrimaryDestination)
 	}
 
 	if len(*secondaryIpFlag) > 0 {
@@ -80,6 +106,8 @@ func main() {
 			IP:   net.ParseIP(*secondaryIpFlag),
 			Port: *secondaryPortFlag,
 		}
+
+		listenMulticast("ra1", rxDesc.SecondaryDestination)
 	}
 
 	if *vlanTagFlag >= 0 {
