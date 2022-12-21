@@ -24,7 +24,7 @@ func main() {
 	rtpOffsetFlag := flag.Int("rtp-offset", 500, "RTP offset")
 	rtpSsrcFlag := flag.Int("rtp-ssrc", 0, "RTP Sync Source Identifier")
 	vlanTagFlag := flag.Int("vlan", -1, "VLAN tag")
-	rtpPayloadTypeFlag := flag.Int("rtp-payload-type", 97, "RTP payload type")
+	rtpPayloadTypeFlag := flag.Int("rtp-payload-type", 98, "RTP payload type")
 	synchronousFlag := flag.Bool("synchronous", false, "Use synchronous instead of syntonous")
 	syncSourceFlag := flag.Bool("sync-source", false, "Use stream as sync source")
 	rtpFilterFlag := flag.Bool("rtp-filter", false, "Use RTP filter")
