@@ -73,14 +73,14 @@ static inline void ra_sd_read_rtcp_rx(struct ra_sd_priv *priv,
 				      struct ra_sd_rtcp_rx_data_fpga *fpga)
 {
 	void __iomem *src = priv->regs + RA_SD_RTCP_RX_DATA;
-	__ioread32_copy(fpga, src, sizeof(*fpga));
+	__ioread32_copy(fpga, src, sizeof(*fpga) / sizeof(u32));
 }
 
 static inline void ra_sd_read_rtcp_tx(struct ra_sd_priv *priv,
 				      struct ra_sd_rtcp_tx_data_fpga *fpga)
 {
 	void __iomem *src = priv->regs + RA_SD_RTCP_TX_DATA;
-	__ioread32_copy(fpga, src, sizeof(*fpga));
+	__ioread32_copy(fpga, src, sizeof(*fpga) / sizeof(u32));
 }
 
 int ra_sd_debugfs_init(struct ra_sd_priv *priv);

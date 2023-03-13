@@ -163,8 +163,7 @@ static int ra_sd_probe(struct platform_device *pdev)
 	ra_sd_iow(priv, RA_SD_CONFIG,
 		  RA_SD_CONFIG_RTCP_RX | RA_SD_CONFIG_RTCP_TX);
 
-	ra_sd_iow(priv, RA_SD_IRQ_MASK,
-		  RA_SD_IRQ_RTCP_RX | RA_SD_IRQ_RTCP_TX);
+	ra_sd_iow(priv, RA_SD_IRQ_MASK, 0);
 
 	dev_info(dev, "Created stream device '%s', minor %d",
 		 priv->misc.name, priv->misc.minor);

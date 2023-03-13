@@ -115,7 +115,7 @@ int ra_sd_read_rtcp_rx_stat_ioctl(struct ra_sd_priv *priv,
 out_unlock:
 	mutex_unlock(&priv->rtcp_rx.mutex);
 
-	return 0;
+	return ret;
 }
 
 int ra_sd_read_rtcp_tx_stat_ioctl(struct ra_sd_priv *priv,
@@ -160,5 +160,5 @@ int ra_sd_read_rtcp_tx_stat_ioctl(struct ra_sd_priv *priv,
 out_unlock:
 	mutex_unlock(&priv->rtcp_tx.mutex);
 
-	return 0;
+	return ret;
 }
