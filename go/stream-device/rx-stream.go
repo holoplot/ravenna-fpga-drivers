@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"net"
+	"time"
+	"unsafe"
 )
 
 type RxStream struct {
@@ -77,4 +79,20 @@ func (rx *RxStream) Update(sd RxStreamDescription) error {
 
 func (rx *RxStream) Close() error {
 	return rx.device.deleteRxStream(rx)
+}
+
+func (rx *RxStream) ReadRTCP(timeout time.Duration) (RxRTCPData, error) {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, uint32(rx.index)) // index
+	binary.Write(buf, binary.LittleEndian, uint32(5*timeout.Milliseconds()))
+	binary.Write(buf, binary.LittleEndian, [3 + (2 * 9)]uint32{}) // padding for return data
+	b := buf.Bytes()
+	p := unsafe.Pointer(&b[0])
+
+	code := ioctlMakeCode(ioctlDirRead|ioctlDirWrite, 'r', 0x10, uintptr(len(b)))
+	if err := doIoctl(rx.device.f.Fd(), code, p); err != nil {
+		return RxRTCPData{}, err
+	}
+
+	return rxRTCPFromIoctlStruct(b[8:]), nil
 }

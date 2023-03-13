@@ -135,7 +135,7 @@ func main() {
 		}
 	}
 
-	_, err = sd.AddRxStream(rxDesc)
+	rx, err := sd.AddRxStream(rxDesc)
 	if err != nil {
 		log.Fatal().
 			Err(err).
@@ -162,6 +162,43 @@ func main() {
 	log.Info().Msg("Hit ^C to exit.")
 
 	for {
-		time.Sleep(time.Minute)
+		time.Sleep(time.Second)
+
+		if r, err := rx.ReadRTCP(time.Second); err == nil {
+			log.Info().
+				Uint32("rtp-timestamp", r.RtpTimestamp).
+				Uint8("dev-state", r.DevState).
+				Uint8("rtp-payload-id", r.RtpPayloadId).
+				Uint16("offset-estimation", r.OffsetEstimation).
+				Int32("path-differential", r.PathDifferential).
+				Msg("RTCP general data")
+
+			logInterfaceData := func(i rsd.RxRTCPInterfaceData, msg string) {
+				log.Info().
+					Uint16("misordered-packets", i.MisorderedPackets).
+					Uint16("base-sequence-nr", i.BaseSequenceNr).
+					Uint32("extended-max-sequence-nr", i.ExtendedMaxSequenceNr).
+					Uint32("received-packets", i.ReceivedPackets).
+					Uint16("peak-jitter", i.PeakJitter).
+					Uint16("estimated-jitter", i.EstimatedJitter).
+					Uint16("last-transit-time", i.LastTransitTime).
+					Uint16("current-offset-estimation", i.CurrentOffsetEstimation).
+					Uint32("last-ssrc", i.LastSsrc).
+					Uint16("buffer-margin-min", i.BufferMarginMin).
+					Uint16("buffer-margin-max", i.BufferMarginMax).
+					Uint16("late-packets", i.LatePackets).
+					Uint16("early-packets", i.EarlyPackets).
+					Uint16("timeout-counter", i.TimeoutCounter).
+					Msg(msg)
+			}
+
+			logInterfaceData(r.Primary, "RTCP data primary")
+
+			if len(*secondaryIpFlag) > 0 {
+				logInterfaceData(r.Secondary, "RTCP data secondary")
+			}
+		} else {
+			log.Error().Err(err).Msg("Error reading RTCP")
+		}
 	}
 }

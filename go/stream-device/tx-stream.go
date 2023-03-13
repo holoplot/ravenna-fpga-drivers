@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"net"
+	"time"
+	"unsafe"
 )
 
 type TxStream struct {
@@ -85,10 +87,26 @@ func (sd *TxStreamDescription) toIoctlStruct() []byte {
 	return buf.Bytes()
 }
 
-func (Tx *TxStream) Update(sd TxStreamDescription) error {
-	return Tx.device.updateTxStream(Tx, sd)
+func (tx *TxStream) Update(sd TxStreamDescription) error {
+	return tx.device.updateTxStream(tx, sd)
 }
 
-func (Tx *TxStream) Close() error {
-	return Tx.device.deleteTxStream(Tx)
+func (tx *TxStream) Close() error {
+	return tx.device.deleteTxStream(tx)
+}
+
+func (tx *TxStream) ReadRTCP(timeout time.Duration) (TxRTCPData, error) {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, uint32(tx.index)) // index
+	binary.Write(buf, binary.LittleEndian, uint32(5*timeout.Milliseconds()))
+	binary.Write(buf, binary.LittleEndian, [2 + (2 * 2)]uint32{}) // padding for return data
+	b := buf.Bytes()
+	p := unsafe.Pointer(&b[0])
+
+	code := ioctlMakeCode(ioctlDirRead|ioctlDirWrite, 'r', 0x11, uintptr(len(b)))
+	if err := doIoctl(tx.device.f.Fd(), code, p); err != nil {
+		return TxRTCPData{}, err
+	}
+
+	return txRTCPFromIoctlStruct(b[8:]), nil
 }

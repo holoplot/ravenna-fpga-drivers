@@ -111,7 +111,7 @@ func main() {
 		}
 	}
 
-	_, err = sd.AddTxStream(txDesc)
+	tx, err := sd.AddTxStream(txDesc)
 	if err != nil {
 		log.Fatal().
 			Err(err).
@@ -143,5 +143,26 @@ func main() {
 
 	for {
 		time.Sleep(time.Minute)
+
+		if r, err := tx.ReadRTCP(time.Second); err == nil {
+			log.Info().
+				Uint32("rtp-timestamp", r.RtpTimestamp).
+				Msg("RTCP general data")
+
+			logInterfaceData := func(i rsd.TxRTCPInterfaceData, msg string) {
+				log.Info().
+					Uint32("sent-packets", i.SentPackets).
+					Uint32("sent-rtp-bytes", i.SentRTPBytes).
+					Msg(msg)
+			}
+
+			logInterfaceData(r.Primary, "RTCP data primary")
+
+			if txDesc.UseSecondary {
+				logInterfaceData(r.Secondary, "RTCP data secondary")
+			}
+		} else {
+			log.Error().Err(err).Msg("Error reading RTCP")
+		}
 	}
 }
