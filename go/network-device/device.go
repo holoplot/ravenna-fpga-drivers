@@ -152,7 +152,7 @@ func (d *Device) ResetCounter() error {
 	return d.writeStringAttribute("counter_reset", "")
 }
 
-func (d *Device) PTPClockIndex() (int, error) {
+func (d *Device) GetPTPClockIndex() (int, error) {
 	e, err := ethtool.NewEthtool()
 	if err != nil {
 		panic(err.Error())

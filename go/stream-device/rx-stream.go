@@ -84,7 +84,7 @@ func (rx *RxStream) Close() error {
 func (rx *RxStream) ReadRTCP(timeout time.Duration) (RxRTCPData, error) {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, uint32(rx.index)) // index
-	binary.Write(buf, binary.LittleEndian, uint32(5*timeout.Milliseconds()))
+	binary.Write(buf, binary.LittleEndian, uint32(timeout.Milliseconds()))
 	binary.Write(buf, binary.LittleEndian, [3 + (2 * 9)]uint32{}) // padding for return data
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
