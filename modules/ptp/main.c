@@ -435,7 +435,7 @@ static ssize_t rtp_timestamp_show(struct device *dev,
 				  struct device_attribute *attr,
 				  char *buf)
 {
-	struct ra_ptp_priv *priv = dev_get_drvdata(dev);
+	struct ra_ptp_priv *priv = dev->platform_data;
 	u64 last_ptp_timestamp;
 	u32 last_rtp_timestamp;
 	unsigned long flags;
@@ -445,7 +445,7 @@ static ssize_t rtp_timestamp_show(struct device *dev,
 	last_rtp_timestamp = priv->last_rtp_timestamp;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return sysfs_emit(buf, "0x%llx 0x%x\n",
+	return sysfs_emit(buf, "%lld %d\n",
 			  last_ptp_timestamp, last_rtp_timestamp);
 }
 static DEVICE_ATTR_RO(rtp_timestamp);
@@ -484,6 +484,7 @@ static int ra_ptp_probe(struct platform_device *pdev)
 
 	spin_lock_init(&priv->lock);
 	dev_set_drvdata(dev, priv);
+	dev->platform_data = priv;
 	priv->dev = dev;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
