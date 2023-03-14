@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"net"
 	"strconv"
@@ -68,14 +69,19 @@ func main() {
 		NumChannels: uint16(*channelsFlag),
 	}
 
-	listenMulticast := func(ifiName string, addr net.UDPAddr) {
+	listenMulticast := func(ctx context.Context, ifiName string, addr net.UDPAddr) {
 		if ifi, err := net.InterfaceByName(ifiName); err == nil {
-			if _, err := net.ListenMulticastUDP("udp4", ifi, &addr); err == nil {
+			if l, err := net.ListenMulticastUDP("udp4", ifi, &addr); err == nil {
 				log.Info().
 					Str("interface", ifiName).
 					IPAddr("ip", addr.IP).
 					Int("port", addr.Port).
 					Msg("Listening")
+
+				go func() {
+					<-ctx.Done()
+					l.Close()
+				}()
 			} else {
 				log.Error().
 					Err(err).
@@ -92,13 +98,15 @@ func main() {
 		}
 	}
 
+	ctx := context.Background()
+
 	if len(*primaryIpFlag) > 0 {
 		rxDesc.PrimaryDestination = net.UDPAddr{
 			IP:   net.ParseIP(*primaryIpFlag),
 			Port: *primaryPortFlag,
 		}
 
-		listenMulticast("ra0", rxDesc.PrimaryDestination)
+		listenMulticast(ctx, "ra0", rxDesc.PrimaryDestination)
 	}
 
 	if len(*secondaryIpFlag) > 0 {
@@ -107,7 +115,7 @@ func main() {
 			Port: *secondaryPortFlag,
 		}
 
-		listenMulticast("ra1", rxDesc.SecondaryDestination)
+		listenMulticast(ctx, "ra1", rxDesc.SecondaryDestination)
 	}
 
 	if *vlanTagFlag >= 0 {
