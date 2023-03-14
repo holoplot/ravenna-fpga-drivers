@@ -344,7 +344,7 @@ static void ra_ptp_extts_irq(struct ra_ptp_priv *priv)
 		if (ctr) {
 			extts.seconds_hi = sot & 0xffff;
 			ra_ptp_ior_rep(priv, RA_PTP_EXTTS_DATA, &extts.seconds,
-				       sizeof(extts) - sizeof(extts.seconds_hi));
+				       sizeof(extts) - sizeof(u32));
 
 			seconds =  (u64)extts.seconds_hi << 32ULL;
 			seconds += (u64)extts.seconds;
