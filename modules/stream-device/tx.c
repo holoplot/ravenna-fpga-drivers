@@ -261,7 +261,7 @@ static void ra_sd_tx_free_stream(struct ra_sd_tx *tx,
 }
 
 int ra_sd_tx_delete_stream_ioctl(struct ra_sd_tx *tx, struct file *filp,
-			      unsigned int size, void __user *buf)
+				 unsigned int size, void __user *buf)
 {
 	struct ra_sd_delete_tx_stream_cmd cmd;
 	struct ra_sd_tx_stream_elem *e;
