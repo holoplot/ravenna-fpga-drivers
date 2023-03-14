@@ -142,7 +142,7 @@ func main() {
 	log.Info().Msg("Hit ^C to exit.")
 
 	for {
-		time.Sleep(time.Minute)
+		time.Sleep(time.Second)
 
 		if r, err := tx.ReadRTCP(time.Second); err == nil {
 			log.Info().

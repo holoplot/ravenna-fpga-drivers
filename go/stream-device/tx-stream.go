@@ -99,7 +99,7 @@ func (tx *TxStream) ReadRTCP(timeout time.Duration) (TxRTCPData, error) {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, uint32(tx.index)) // index
 	binary.Write(buf, binary.LittleEndian, uint32(5*timeout.Milliseconds()))
-	binary.Write(buf, binary.LittleEndian, [2 + (2 * 2)]uint32{}) // padding for return data
+	binary.Write(buf, binary.LittleEndian, [1 + (2 * 2)]uint32{}) // padding for return data
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 

@@ -59,6 +59,8 @@ func rxRTCPFromIoctlStruct(b []byte) RxRTCPData {
 	binary.Read(buf, binary.LittleEndian, &d.Primary.LatePackets)
 	binary.Read(buf, binary.LittleEndian, &d.Primary.EarlyPackets)
 	binary.Read(buf, binary.LittleEndian, &d.Primary.TimeoutCounter)
+	binary.Read(buf, binary.LittleEndian, &d.Primary.Error)
+	binary.Read(buf, binary.LittleEndian, &d.Primary.Playing)
 
 	binary.Read(buf, binary.LittleEndian, &d.Secondary.MisorderedPackets)
 	binary.Read(buf, binary.LittleEndian, &d.Secondary.BaseSequenceNr)
@@ -74,6 +76,8 @@ func rxRTCPFromIoctlStruct(b []byte) RxRTCPData {
 	binary.Read(buf, binary.LittleEndian, &d.Secondary.LatePackets)
 	binary.Read(buf, binary.LittleEndian, &d.Secondary.EarlyPackets)
 	binary.Read(buf, binary.LittleEndian, &d.Secondary.TimeoutCounter)
+	binary.Read(buf, binary.LittleEndian, &d.Secondary.Error)
+	binary.Read(buf, binary.LittleEndian, &d.Secondary.Playing)
 
 	return d
 }
