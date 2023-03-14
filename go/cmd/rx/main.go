@@ -151,15 +151,15 @@ func main() {
 	}
 
 	log.Info().
-		Int("channels", int(rxDesc.NumChannels)).
+		Uint16("channels", rxDesc.NumChannels).
 		IPAddr("primary-ip", rxDesc.PrimaryDestination.IP).
-		Int("primary-port", int(rxDesc.PrimaryDestination.Port)).
+		Int("primary-port", rxDesc.PrimaryDestination.Port).
 		IPAddr("secondary-ip", rxDesc.SecondaryDestination.IP).
-		Int("secondary-port", int(rxDesc.SecondaryDestination.Port)).
-		Int("jitter-buffer-margin", int(rxDesc.JitterBufferMargin)).
-		Int("rtp-offset", int(rxDesc.RtpOffset)).
-		Int("rtp-ssrc", int(rxDesc.RtpSsrc)).
-		Int("rtp-payload-type", int(rxDesc.RtpPayloadType)).
+		Int("secondary-port", rxDesc.SecondaryDestination.Port).
+		Uint16("jitter-buffer-margin", rxDesc.JitterBufferMargin).
+		Uint32("rtp-offset", rxDesc.RtpOffset).
+		Uint32("rtp-ssrc", rxDesc.RtpSsrc).
+		Uint8("rtp-payload-type", rxDesc.RtpPayloadType).
 		Bool("rtp-filter", rxDesc.RtpFilter).
 		Bool("synchronous", rxDesc.Synchronous).
 		Bool("sync-source", rxDesc.SyncSource).
@@ -179,7 +179,7 @@ func main() {
 				Uint8("rtp-payload-id", r.RtpPayloadId).
 				Uint16("offset-estimation", r.OffsetEstimation).
 				Int32("path-differential", r.PathDifferential).
-				Msg("RTCP general data")
+				Msg("RTCP general")
 
 			logInterfaceData := func(i rsd.RxRTCPInterfaceData, msg string) {
 				log.Info().
@@ -197,13 +197,15 @@ func main() {
 					Uint16("late-packets", i.LatePackets).
 					Uint16("early-packets", i.EarlyPackets).
 					Uint16("timeout-counter", i.TimeoutCounter).
+					Bool("playing", i.Playing).
+					Bool("error", i.Error).
 					Msg(msg)
 			}
 
-			logInterfaceData(r.Primary, "RTCP data primary")
+			logInterfaceData(r.Primary, "RTCP primary")
 
 			if len(*secondaryIpFlag) > 0 {
-				logInterfaceData(r.Secondary, "RTCP data secondary")
+				logInterfaceData(r.Secondary, "RTCP secondary")
 			}
 		} else {
 			log.Error().Err(err).Msg("Error reading RTCP")

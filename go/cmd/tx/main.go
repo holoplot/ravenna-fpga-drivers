@@ -30,9 +30,9 @@ func main() {
 	ttlFlag := flag.Int("ttl", 1, "TTL of outgoing packets")
 	nextRtpTxTimeFlag := flag.Int("next-rtp-tx-time", 0, "Next RTP TX time")
 	nextRtpSequenceNumberFlag := flag.Int("next-rtp-sequence-number", 0, "Next RTP sequence number")
-	rtpOffsetFlag := flag.Int("rtp-offset", 500, "RTP offset")
+	rtpOffsetFlag := flag.Int("rtp-offset", 0, "RTP offset")
 	rtpSsrcFlag := flag.Int("rtp-ssrc", 1, "RTP Sync Source Identifier")
-	rtpPayloadTypeFlag := flag.Int("rtp-payload-type", 97, "RTP payload type")
+	rtpPayloadTypeFlag := flag.Int("rtp-payload-type", 98, "RTP payload type")
 	trackMapFlag := flag.String("track-map", "", "Comma separated list of tracks to map. Defaults to 1:1 mapping to channels.")
 	flag.Parse()
 
@@ -119,22 +119,22 @@ func main() {
 	}
 
 	log.Info().
-		Int("channels", int(txDesc.NumChannels)).
-		Int("samples", int(txDesc.NumSamples)).
-		Int("ttl", int(txDesc.Ttl)).
+		Uint16("channels", txDesc.NumChannels).
+		Uint8("samples", txDesc.NumSamples).
+		Uint8("ttl", txDesc.Ttl).
 		Bool("primary", txDesc.UsePrimary).
 		Bool("secondary", txDesc.UseSecondary).
 		IPAddr("primary-destination-ip", txDesc.Primary.Destination.IP).
 		IPAddr("primary-source-ip", txDesc.Primary.Source.IP).
-		Int("primary-port", int(txDesc.Primary.Destination.Port)).
+		Int("primary-port", txDesc.Primary.Destination.Port).
 		IPAddr("secondary-destination-ip", txDesc.Secondary.Destination.IP).
 		IPAddr("secondary-source-ip", txDesc.Secondary.Source.IP).
-		Int("secondary-port", int(txDesc.Secondary.Destination.Port)).
-		Int("primary-vlan", int(txDesc.Primary.VlanTag)).
-		Int("secondary-vlan", int(txDesc.Secondary.VlanTag)).
-		Int("rtp-offset", int(txDesc.RtpOffset)).
-		Int("rtp-ssrc", int(txDesc.RtpSsrc)).
-		Int("rtp-payload-type", int(txDesc.RtpPayloadType)).
+		Int("secondary-port", txDesc.Secondary.Destination.Port).
+		Uint16("primary-vlan", txDesc.Primary.VlanTag).
+		Uint16("secondary-vlan", txDesc.Secondary.VlanTag).
+		Uint32("rtp-offset", txDesc.RtpOffset).
+		Uint32("rtp-ssrc", txDesc.RtpSsrc).
+		Uint8("rtp-payload-type", txDesc.RtpPayloadType).
 		Bool("multicast", txDesc.Multicast).
 		Ints16("tx-tracks", txDesc.Tracks[:txDesc.NumChannels]).
 		Msg("TX stream added")
