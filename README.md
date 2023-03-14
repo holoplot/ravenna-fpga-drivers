@@ -275,7 +275,9 @@ This driver supports the PTP interfaces.
 
 ### SysFS entries
 
-`rtp_timestamp` ...
+`rtp_timestamp` returns the last reported PTP and RTP timestamp values in decimal format, separated by a whitespace.
+The first value is the PTP timestamp in nanoseconds since the UNIX epoch.
+The second value is the local RTP word clock counter.
 
 ### DTS properties
 
