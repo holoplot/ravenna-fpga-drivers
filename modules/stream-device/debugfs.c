@@ -16,7 +16,7 @@ static int ra_sd_info_show(struct seq_file *s, void *p)
 
 	seq_printf(s, "Driver version: %s\n", ra_driver_version());
 	seq_printf(s, "Device name: %s\n", priv->misc.name);
-	seq_printf(s, "Device minor: %d\n", priv->misc.minor);
+	seq_printf(s, "Device minor: %u\n", priv->misc.minor);
 
 	return 0;
 }
@@ -27,9 +27,9 @@ static int ra_sd_decoder_show(struct seq_file *s, void *p)
 {
 	struct ra_sd_priv *priv = s->private;
 
-	seq_printf(s, "RX decoder data dropped counter: %d\n",
+	seq_printf(s, "RX decoder data dropped counter: %u\n",
 		   ra_sd_ior(priv, RA_SD_CNT_RX_DEC_DROP));
-	seq_printf(s, "RX decoder FIFO overflow counter: %d\n",
+	seq_printf(s, "RX decoder FIFO overflow counter: %u\n",
 		   ra_sd_ior(priv, RA_SD_CNT_RX_DEC_FIFO_OVR));
 
 	return 0;
@@ -131,14 +131,14 @@ static void ra_sd_tx_print_interface(struct seq_file *s,
 				     struct ra_sd_tx_stream_interface *i,
 				     bool vlan)
 {
-	seq_printf(s, "    Source: %pI4:%d\n",
+	seq_printf(s, "    Source: %pI4:%u\n",
 		&i->source_ip, be16_to_cpu(i->source_port));
-	seq_printf(s, "    Destination: %pI4:%d\n",
+	seq_printf(s, "    Destination: %pI4:%u\n",
 		&i->destination_ip, be16_to_cpu(i->destination_port));
 	seq_printf(s, "    Destination MAC: %pM\n", &i->destination_mac);
 
 	if (vlan)
-		seq_printf(s, "    VLAN tag: %d\n", be16_to_cpu(i->vlan_tag));
+		seq_printf(s, "    VLAN tag: %u\n", be16_to_cpu(i->vlan_tag));
 }
 
 static int ra_sd_tx_streams_show(struct seq_file *s, void *p)
@@ -154,7 +154,7 @@ static int ra_sd_tx_streams_show(struct seq_file *s, void *p)
 
 		seq_printf(s, "Stream #%lu\n", index);
 
-		seq_printf(s, "  Created by: PID %d\n", pid_vnr(e->pid));
+		seq_printf(s, "  Created by: PID %u\n", pid_vnr(e->pid));
 
 		if (st->use_primary) {
 			seq_printf(s, "  Primary network\n");
@@ -166,19 +166,19 @@ static int ra_sd_tx_streams_show(struct seq_file *s, void *p)
 			ra_sd_tx_print_interface(s, &st->secondary, st->vlan_tagged);
 		}
 
-		seq_printf(s, "  Channels: %d\n", st->num_channels);
-		seq_printf(s, "  Samples: %d\n", st->num_samples);
+		seq_printf(s, "  Channels: %u\n", st->num_channels);
+		seq_printf(s, "  Samples: %u\n", st->num_samples);
 
 		seq_printf(s, "  Codec: %s\n", ra_sd_codec_str(st->codec));
-		seq_printf(s, "  RTP payload type: %d\n", st->rtp_payload_type);
-		seq_printf(s, "  RTP offset: %d\n", st->rtp_offset);
-		seq_printf(s, "  RTP SSRC: %d\n", st->rtp_ssrc);
+		seq_printf(s, "  RTP payload type: %u\n", st->rtp_payload_type);
+		seq_printf(s, "  RTP offset: %u\n", st->rtp_offset);
+		seq_printf(s, "  RTP SSRC: %u\n", st->rtp_ssrc);
 
 		seq_printf(s, "  Mode: %s%s\n",
 			   st->vlan_tagged	? "VLAN-TAGGED " : "",
 			   st->multicast	? "MULTICAST "   : "UNICAST");
 
-		seq_printf(s, "  Track table entry: %d\n", e->trtb_index);
+		seq_printf(s, "  Track table entry: %u\n", e->trtb_index);
 
 		ra_sd_dump_tracks(s, st->tracks, st->num_channels);
 
@@ -261,28 +261,28 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 
 		seq_printf(s, "Stream #%lu\n", index);
 
-		seq_printf(s, "  Created by: PID %d\n", pid_vnr(e->pid));
+		seq_printf(s, "  Created by: PID %u\n", pid_vnr(e->pid));
 
 		if (st->primary.destination_ip != 0)
-			seq_printf(s, "  Primary destination: %pI4:%d\n",
+			seq_printf(s, "  Primary destination: %pI4:%u\n",
 				   &st->primary.destination_ip,
 				   be16_to_cpu(st->primary.destination_port));
 
 		if (st->secondary.destination_ip != 0)
-			seq_printf(s, "  Secondary destination: %pI4:%d\n",
+			seq_printf(s, "  Secondary destination: %pI4:%u\n",
 				   &st->secondary.destination_ip,
 				   be16_to_cpu(st->secondary.destination_port));
 
 		if (st->vlan_tagged)
-			seq_printf(s, "  VLAN tag: %d\n",
+			seq_printf(s, "  VLAN tag: %u\n",
 				   be16_to_cpu(st->vlan_tag));
 
-		seq_printf(s, "  Channels: %d\n", st->num_channels);
+		seq_printf(s, "  Channels: %u\n", st->num_channels);
 		seq_printf(s, "  Codec: %s\n", ra_sd_codec_str(st->codec));
-		seq_printf(s, "  RTP payload type: %d\n", st->rtp_payload_type);
-		seq_printf(s, "  RTP offset: %d\n", st->rtp_offset);
-		seq_printf(s, "  RTP SSRC: %d\n", st->rtp_ssrc);
-		seq_printf(s, "  Jitter buffer margin: %d\n", st->jitter_buffer_margin);
+		seq_printf(s, "  RTP payload type: %u\n", st->rtp_payload_type);
+		seq_printf(s, "  RTP offset: %u\n", st->rtp_offset);
+		seq_printf(s, "  RTP SSRC: %u\n", st->rtp_ssrc);
+		seq_printf(s, "  Jitter buffer margin: %u\n", st->jitter_buffer_margin);
 
 		seq_printf(s, "  Mode: %s%s%s%s%s\n",
 			   st->sync_source		? "SYNC-SOURCE " : "",
@@ -292,7 +292,7 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 			   st->synchronous		? "SYNCHRONOUS " :
 							  "SYNTONOUS ");
 
-		seq_printf(s, "  Track table entry: %d\n", e->trtb_index);
+		seq_printf(s, "  Track table entry: %u\n", e->trtb_index);
 
 		ra_sd_dump_tracks(s, st->tracks, st->num_channels);
 
@@ -337,10 +337,10 @@ static int ra_sd_rx_hash_table_show(struct seq_file *s, void *p)
 	struct ra_sd_priv *priv = s->private;
 	u32 val = ra_sd_ior(priv, RA_SD_RX_HSTB_STAT);
 
-	seq_printf(s, "Hash table entries: %d\n", val & 0xff);
-	seq_printf(s, "Large clusters: %d\n", (val >> 8) & 0xff);
-	seq_printf(s, "Maximum cluster length: %d\n", (val >> 16) & 0xff);
-	seq_printf(s, "Fragmented entries: %d\n", (val >> 24) & 0xff);
+	seq_printf(s, "Hash table entries: %u\n", val & 0xff);
+	seq_printf(s, "Large clusters: %u\n", (val >> 8) & 0xff);
+	seq_printf(s, "Maximum cluster length: %u\n", (val >> 16) & 0xff);
+	seq_printf(s, "Fragmented entries: %u\n", (val >> 24) & 0xff);
 
 	return 0;
 }

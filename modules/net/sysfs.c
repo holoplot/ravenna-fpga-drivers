@@ -37,9 +37,8 @@ static ssize_t ra_net_show_u32(struct device *dev,
 	struct ra_net_priv *priv = netdev_priv(to_net_dev(dev));
 	u32 v = ra_net_ior(priv, reg);
 
-	return sysfs_emit(buf, "%d\n", v);
+	return sysfs_emit(buf, "%u\n", v);
 }
-
 
 static ssize_t rtp_global_offset_show(struct device *dev,
 				      struct device_attribute *attr,
