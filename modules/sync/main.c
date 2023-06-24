@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <linux/clk.h>
+#include <linux/file.h>
 #include <linux/interrupt.h>
 #include <linux/miscdevice.h>
+#include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
