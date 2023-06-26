@@ -7,24 +7,41 @@
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
 
-#define RA_IRQ_REQUEST_REG	0x0000
-#define RA_IRQ_MASK_REG		0x0004
+#define RA_IRQ_REQUEST_REG	0
+#define RA_IRQ_MASK_REG		1
 
 struct ra_irq_priv {
 	void __iomem *regs;
 	struct device *dev;
 	struct irq_domain *domain;
+	int width;
 	spinlock_t lock;
 };
 
 static inline u32 ra_irq_ior(struct ra_irq_priv *priv, off_t reg)
 {
-	return ioread32(priv->regs + reg);
+	switch (priv->width) {
+		case 32:
+			return ioread32(priv->regs + (reg << 2));
+		case 16:
+			return (u32) ioread16(priv->regs + (reg << 1));
+		default:
+			BUG();
+	}
 }
 
 static inline void ra_irq_iow(struct ra_irq_priv *priv, off_t reg, u32 val)
 {
-	iowrite32(val, priv->regs + reg);
+	switch (priv->width) {
+		case 32:
+			iowrite32(val, priv->regs + (reg << 2));
+			break;
+		case 16:
+			iowrite16((u16) val, priv->regs + (reg << 1));
+			break;
+		default:
+			BUG();
+	}
 }
 
 static void ra_irq_irqchip_mask(struct irq_data *d)
@@ -87,16 +104,18 @@ static void ra_irq_irq_handler(struct irq_desc *desc)
 	mask = ra_irq_ior(priv, RA_IRQ_MASK_REG);
 	pending = irqs & ~mask;
 
-	dev_dbg(priv->dev, "%s(): pending 0x%lx\n", __func__, pending);
+	dev_dbg(priv->dev, "%s(): pending 0x%lx, width %d\n",
+		__func__, pending, priv->width);
 
-	for_each_set_bit(hwirq, &pending, 32)
+	for_each_set_bit(hwirq, &pending, priv->width)
 		generic_handle_domain_irq(priv->domain, hwirq);
 
 	chained_irq_exit(host_chip, desc);
 }
 
 static const struct of_device_id ra_irq_of_ids[] = {
-	{ .compatible = "lawo,ravenna-irq-controller" },
+	{ .compatible = "lawo,ravenna-irq-controller-32bit", .data = (void *)32 },
+	{ .compatible = "lawo,ravenna-irq-controller-16bit", .data = (void *)16 },
 	{}
 };
 MODULE_DEVICE_TABLE(of, ra_irq_of_ids);
@@ -122,14 +141,16 @@ static int ra_irq_drv_probe(struct platform_device *pdev)
 	spin_lock_init(&priv->lock);
 
 	priv->dev = dev;
+	priv->width = (int)of_device_get_match_data(dev);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-
-	dev_info(dev, "Ravenna FPGA IRQ controller @%llx\n", res->start);
 
 	priv->regs = devm_ioremap_resource(dev, res);
 	if (IS_ERR(priv->regs))
 		return PTR_ERR(priv->regs);
+
+	dev_info(dev, "Ravenna FPGA IRQ controller @%pa, %d-bit\n",
+		 &res->start, priv->width);
 
 	irq = of_irq_get(dev->of_node, 0);
 	if (irq < 0) {
@@ -140,7 +161,8 @@ static int ra_irq_drv_probe(struct platform_device *pdev)
 	/* initially disable all IRQ sources */
 	ra_irq_iow(priv, RA_IRQ_MASK_REG, ~0);
 
-	priv->domain = irq_domain_add_linear(node, 32, &ra_irq_irq_ops, priv);
+	priv->domain = irq_domain_add_linear(node, priv->width,
+					     &ra_irq_irq_ops, priv);
 	if (!priv->domain)
 		return -ENOMEM;
 

@@ -2,13 +2,14 @@
 
 ## IRQ
 
-This driver supports the IRQ mux. It supports up to 32 downstream IRQs.
+This driver supports the IRQ mux. It supports th 16bit and 32bit versions and
+offers as many IRQs as the register width.
 
 ### DTS properties
 
 | Property name                          | Mandatory | Description                                |
 |----------------------------------------|:---------:|--------------------------------------------|
-| `compatible`                           | *         | Must be `lawo,ravenna-irq-controller`      |
+| `compatible`                           | *         | Must be `lawo,ravenna-irq-controller-32bit` or `lawo,ravenna-irq-controller-16bit` |
 | `interrupt-controller`                 | *         |                                            |
 | `interrupts`, `interrupt-parent`       | *         | Upstream interrupt                         |
 | `#interrupt-cells`                     | *         | Set to `<1>`                               |
@@ -19,7 +20,7 @@ This driver supports the IRQ mux. It supports up to 32 downstream IRQs.
 
 ```
     ravenna_irq: ravenna-irq@a01ffc00 {
-        compatible = "lawo,ravenna-irq-controller";
+        compatible = "lawo,ravenna-irq-controller-32bit";
 
         interrupt-controller;
         interrupt-parent = <&gic>;
