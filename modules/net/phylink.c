@@ -35,8 +35,6 @@ static void ra_net_mac_link_up(struct phylink_config *config,
 	struct ra_net_priv *priv = netdev_priv(ndev);
 	u32 v = RA_NET_AUTO_SPEED_MANUAL;
 
-	printk(" ___ %s() speed %d, duplex %d\n", __func__, speed, duplex);
-
 	switch (speed) {
 	case SPEED_10:
 		v |= RA_NET_AUTO_SPEED_10;
