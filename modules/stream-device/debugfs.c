@@ -238,8 +238,8 @@ static int ra_sd_rx_summary_show(struct seq_file *s, void *p)
 				 priv->rx.trtb.max_entries),
 		   priv->rx.trtb.max_entries);
 	seq_printf(s, "Tracks: %u/%u\n",
-		   bitmap_weight(priv->rx.used_tracks, RA_MAX_TRACKS),
-		   RA_MAX_TRACKS);
+		   bitmap_weight(priv->rx.used_tracks, priv->max_tracks),
+		   priv->max_tracks);
 
 	mutex_unlock(&priv->rx.mutex);
 

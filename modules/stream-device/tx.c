@@ -31,8 +31,10 @@ ra_sd_rx_validate_stream_interface(const struct ra_sd_tx_stream_interface *iface
 	return 0;
 }
 
-static int ra_sd_tx_validate_stream(const struct ra_sd_tx_stream *stream)
+static int ra_sd_tx_validate_stream(struct ra_sd_tx *tx,
+				    const struct ra_sd_tx_stream *stream)
 {
+	struct ra_sd_priv *priv = container_of(tx, struct ra_sd_priv, tx);
 	int i, ret;
 
 	if (!stream->use_primary &&
@@ -69,7 +71,7 @@ static int ra_sd_tx_validate_stream(const struct ra_sd_tx_stream *stream)
 		return -EINVAL;
 
 	for (i = 0; i < ARRAY_SIZE(stream->tracks); i++)
-		if (stream->tracks[i] >= RA_MAX_TRACKS)
+		if (stream->tracks[i] >= (__s16)priv->max_tracks)
 			return -EINVAL;
 
 	return 0;
@@ -104,7 +106,7 @@ int ra_sd_tx_add_stream_ioctl(struct ra_sd_tx *tx, struct file *filp,
 	if (cmd.version != 0)
 		return -EINVAL;
 
-	ret = ra_sd_tx_validate_stream(&cmd.stream);
+	ret = ra_sd_tx_validate_stream(tx, &cmd.stream);
 	if (ret < 0)
 		return ret;
 
@@ -173,7 +175,7 @@ int ra_sd_tx_update_stream_ioctl(struct ra_sd_tx *tx, struct file *filp,
 	if (cmd.version != 0)
 		return -EINVAL;
 
-	ret = ra_sd_tx_validate_stream(&cmd.stream);
+	ret = ra_sd_tx_validate_stream(tx, &cmd.stream);
 	if (ret < 0)
 		return ret;
 

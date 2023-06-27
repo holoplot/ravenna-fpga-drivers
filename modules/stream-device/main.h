@@ -38,6 +38,7 @@ struct ra_sd_priv {
 	struct miscdevice	misc;
 	void __iomem		*regs;
 	struct dentry		*debugfs;
+	u32			max_tracks;
 
 	struct {
 		wait_queue_head_t		wait;

@@ -25,8 +25,10 @@ ra_sd_rx_validate_stream_interface(const struct ra_sd_rx_stream_interface *iface
 	return 0;
 }
 
-static int ra_sd_rx_validate_stream(const struct ra_sd_rx_stream *stream)
+static int ra_sd_rx_validate_stream(const struct ra_sd_rx *rx,
+				    const struct ra_sd_rx_stream *stream)
 {
+	struct ra_sd_priv *priv = container_of(rx, struct ra_sd_priv, rx);
 	int i, ret;
 
 	if (stream->primary.destination_ip == 0 &&
@@ -57,7 +59,7 @@ static int ra_sd_rx_validate_stream(const struct ra_sd_rx_stream *stream)
 		return ret;
 
 	for (i = 0; i < stream->num_channels; i++)
-		if (stream->tracks[i] >= RA_MAX_TRACKS)
+		if (stream->tracks[i] >= (__s16)priv->max_tracks)
 			return -EINVAL;
 
 	return 0;
@@ -110,7 +112,7 @@ int ra_sd_rx_add_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 	if (cmd.version != 0)
 		return -EINVAL;
 
-	ret = ra_sd_rx_validate_stream(&cmd.stream);
+	ret = ra_sd_rx_validate_stream(rx, &cmd.stream);
 	if (ret < 0)
 		return ret;
 
@@ -180,7 +182,7 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 	if (cmd.version != 0)
 		return -EINVAL;
 
-	ret = ra_sd_rx_validate_stream(&cmd.stream);
+	ret = ra_sd_rx_validate_stream(rx, &cmd.stream);
 	if (ret < 0)
 		return ret;
 
@@ -344,6 +346,7 @@ static void ra_sd_rx_destroy_streams(void *xa)
 
 int ra_sd_rx_probe(struct ra_sd_rx *rx, struct device *dev)
 {
+	struct ra_sd_priv *priv = container_of(rx, struct ra_sd_priv, rx);
 	struct device_node *child_node;
 	int ret;
 
@@ -380,7 +383,7 @@ int ra_sd_rx_probe(struct ra_sd_rx *rx, struct device *dev)
 	if (ret < 0)
 		return ret;
 
-	rx->used_tracks = devm_bitmap_zalloc(dev, RA_MAX_TRACKS, GFP_KERNEL);
+	rx->used_tracks = devm_bitmap_zalloc(dev, priv->max_tracks, GFP_KERNEL);
 	if (!rx->used_tracks)
 		return -ENOMEM;
 

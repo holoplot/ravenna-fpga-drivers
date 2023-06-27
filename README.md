@@ -219,7 +219,8 @@ Entry #0 (VALID, ACTIVE)
 | `compatible`                           | *         | Must be `lawo,ravenna-stream-device`        |
 | `reg`                                  | *         | Register space                              |
 | `interrupts`, `interrupt-parent`       | *         | Upstream interrupt                          |
-| `laow,device-name`                     | *         | Character device name to use                |
+| `lawo,device-name`                     | *         | Character device name to use                |
+| `#lawo,tracks`                         | *         | Number of tracks supported by hardware      |
 | `stream-table-tx`                      | *         | phandle to the TX stream table node         |
 | `track-table-tx`                       | *         | phandle to the TX track table node          |
 | `stream-table-rx`                      | *         | phandle to the RX stream table node         |
@@ -235,7 +236,8 @@ Entry #0 (VALID, ACTIVE)
         interrupt-parent = <&ravenna_irq>;
         interrupts = <16>;
 
-	lawo,device-name = "ravenna-stream-device";
+        lawo,device-name = "ravenna-stream-device";
+        #lawo,tracks = <256>;
 
         stream-table-tx = <&stream_table_tx_0>;
         track-table-tx = <&track_table_tx_0>;

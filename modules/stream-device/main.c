@@ -120,6 +120,19 @@ static int ra_sd_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	ret = of_property_read_u32(dev->of_node, "#lawo,tracks",
+				   &priv->max_tracks);
+	if (ret < 0) {
+		dev_err(dev, "No #lawo,tracks property\n");
+		return -EINVAL;
+	}
+
+	if (priv->max_tracks > 256) {
+		dev_err(dev, "Unsupported number of tracks: %d\n",
+			priv->max_tracks);
+		return -EINVAL;
+	}
+
 	ret = ra_sd_rx_probe(&priv->rx, dev);
 	if (ret < 0) {
 		dev_err(dev, "RX setup failed: %d\n", ret);
