@@ -141,7 +141,7 @@ static int ra_irq_drv_probe(struct platform_device *pdev)
 	spin_lock_init(&priv->lock);
 
 	priv->dev = dev;
-	priv->width = (int)of_device_get_match_data(dev);
+	priv->width = (unsigned long)of_device_get_match_data(dev);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
