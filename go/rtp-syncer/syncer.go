@@ -3,13 +3,13 @@ package syncer
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/holoplot/go-linuxptp/pkg/ptp"
 	rnd "github.com/holoplot/ravenna-fpga-drivers/go/network-device"
 	rpd "github.com/holoplot/ravenna-fpga-drivers/go/ptp-device"
 	"github.com/rs/zerolog/log"
-	"lukechampine.com/uint128"
 )
 
 type RtpSyncer struct {
@@ -24,21 +24,23 @@ type RtpSyncer struct {
 func (s *RtpSyncer) globalWordClockCounter(ptpTimestamp uint64, rtpTimestamp uint32) uint32 {
 	// v = (ptpTimestamp * sampleRate / nanoSecondsPerSecond) - rtpTimestamp
 
-	r := uint128.From64(ptpTimestamp)
-	r = r.Mul64(uint64(s.sampleRate))
+	r := big.NewInt(0)
+	r.Mul(big.NewInt(int64(ptpTimestamp)), big.NewInt(int64(s.sampleRate)))
 
-	div := uint64(time.Second / time.Nanosecond)
-	remainder := r.Mod64(div)
+	div := big.NewInt(int64(time.Second / time.Nanosecond))
+	remainder := big.NewInt(0)
+	r.DivMod(r, div, remainder)
 
-	r = r.Div64(div)
+	remainder.Mul(remainder, big.NewInt(2))
 
-	if r.Cmp64(remainder*2) > 0 {
-		r = r.Add64(1)
+	if remainder.Cmp(div) > 0 {
+		r.Add(r, big.NewInt(1))
 	}
 
-	r = r.Sub64(uint64(rtpTimestamp))
+	r.Sub(r, big.NewInt(int64(rtpTimestamp)))
+	r.And(r, big.NewInt(0xffffffff))
 
-	return uint32(r.Lo)
+	return uint32(r.Int64())
 }
 
 type UpdateFunc func(ctx context.Context, s *RtpSyncer, oldOffset, newOffset uint32)
@@ -98,6 +100,7 @@ func New(netDeviceIndex, sampleRate int) (*RtpSyncer, error) {
 	return &RtpSyncer{
 		pd:         pd,
 		nd:         nd,
+		sampleRate: sampleRate,
 		lastOffset: uint32(n),
 	}, nil
 }
