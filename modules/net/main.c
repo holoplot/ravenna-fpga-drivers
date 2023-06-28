@@ -584,7 +584,7 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 
 	strcpy(ndev->name, "ra%d");
 	SET_NETDEV_DEV(ndev, dev);
-	netif_napi_add(ndev, &priv->napi, ra_net_napi_poll, 64);
+	netif_napi_add(ndev, &priv->napi, ra_net_napi_poll);
 
 	if (!is_valid_ether_addr(ndev->dev_addr))
 		eth_hw_addr_random(ndev);
