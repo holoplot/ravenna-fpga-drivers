@@ -253,6 +253,8 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 	    e->stream.secondary.destination_port != cmd.stream.secondary.destination_port)
 		invalidate = true;
 
+	ra_sd_rx_tracks_mark_unused(rx, &e->stream);
+
 	memcpy(&e->stream, &cmd.stream, sizeof(e->stream));
 
 	ra_sd_rx_tracks_mark_used(rx, &e->stream);
