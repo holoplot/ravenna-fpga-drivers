@@ -102,9 +102,10 @@ static int ra_ptp_set_per_out(struct ra_ptp_priv *priv, int ns)
 #define to_ra_ptp_priv(ptp) \
 	container_of(ptp, struct ra_ptp_priv, ptp_clock_info)
 
-static int ra_ptp_adjfreq(struct ptp_clock_info *ptp, int ppb)
+static int ra_ptp_adjfine(struct ptp_clock_info *ptp, long scaled_ppm)
 {
 	struct ra_ptp_priv *priv = to_ra_ptp_priv(ptp);
+	s32 ppb = scaled_ppm_to_ppb(scaled_ppm);
 	unsigned long flags;
 	u32 val = 0;
 
@@ -513,7 +514,7 @@ static int ra_ptp_probe(struct platform_device *pdev)
 	priv->ptp_clock_info.max_adj	= RA_PTP_DRIFT_CORRECTION_MAX_PPB;
 	priv->ptp_clock_info.n_ext_ts	= RA_PTP_EXTTS_CNT;
 	priv->ptp_clock_info.n_per_out	= RA_PTP_PEROUT_CNT;
-	priv->ptp_clock_info.adjfreq	= ra_ptp_adjfreq;
+	priv->ptp_clock_info.adjfine	= ra_ptp_adjfine;
 	priv->ptp_clock_info.adjtime	= ra_ptp_adjtime;
 	priv->ptp_clock_info.gettime64	= ra_ptp_gettime;
 	priv->ptp_clock_info.settime64	= ra_ptp_settime;
