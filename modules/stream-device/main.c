@@ -29,6 +29,29 @@ static irqreturn_t ra_sd_irqhandler(int irq, void *devid)
 	return ret;
 }
 
+int ra_sd_read_info_ioctl(struct ra_sd_priv *priv,
+			  unsigned int size,
+			  void __user *buf)
+{
+	struct ra_sd_read_info_cmd cmd;
+	int ret;
+
+	if (size != sizeof(cmd))
+		return -EINVAL;
+
+	if (copy_from_user(&cmd, buf, sizeof(cmd)))
+		return -EFAULT;
+
+	cmd.info.max_tracks = priv->max_tracks;
+	cmd.info.max_rx_streams = priv->rx.sttb.max_entries;
+	cmd.info.max_tx_streams = priv->tx.sttb.max_entries;
+
+	if (copy_to_user(buf, &cmd, sizeof(cmd)))
+		return -EFAULT;
+
+	return 0;
+}
+
 static long ra_sd_ioctl(struct file *filp,
 			unsigned int cmd,
 			unsigned long arg)
@@ -38,6 +61,9 @@ static long ra_sd_ioctl(struct file *filp,
 	unsigned int size = _IOC_SIZE(cmd);
 
 	switch (cmd) {
+	case RA_SD_READ_INFO:
+		return ra_sd_read_info_ioctl(priv, size, buf);
+
 	case RA_SD_READ_RTCP_RX_STAT:
 		return ra_sd_read_rtcp_rx_stat_ioctl(priv, size, buf);
 

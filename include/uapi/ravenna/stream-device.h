@@ -17,6 +17,17 @@ enum {
 	RA_SD_STATE_REALIGN		= 5,
 };
 
+struct ra_sd_info {
+	__u32 max_tracks;
+	__u32 max_rx_streams;
+	__u32 max_tx_streams;
+};
+
+struct ra_sd_read_info_cmd {
+	__u32 version;
+	struct ra_sd_info info;
+};
+
 struct ra_sd_rtcp_rx_data {
 	__u32 rtp_timestamp;
 	__u8 dev_state;
@@ -168,6 +179,8 @@ struct ra_sd_delete_tx_stream_cmd {
 	__u32 version;
 	__u32 index;
 };
+
+#define RA_SD_READ_INFO		_IOWR('r', 0x00, struct ra_sd_read_info_cmd)
 
 #define RA_SD_READ_RTCP_RX_STAT	_IOWR('r', 0x10, struct ra_sd_read_rtcp_rx_stat_cmd)
 #define RA_SD_READ_RTCP_TX_STAT	_IOWR('r', 0x11, struct ra_sd_read_rtcp_tx_stat_cmd)

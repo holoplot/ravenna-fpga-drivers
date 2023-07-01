@@ -3,24 +3,70 @@ package ravenna_stream_device
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io/fs"
 	"os"
 	"unsafe"
 )
 
+type DeviceInfo struct {
+	MaxTracks    int
+	MaxRxStreams int
+	MaxTxStreams int
+}
+
 type Device struct {
-	f *os.File
+	f    *os.File
+	info DeviceInfo
 }
 
 func Open(path string) (*Device, error) {
-	f, err := os.OpenFile(path, 0, fs.FileMode(os.O_RDWR))
-	if err != nil {
+	d := &Device{}
+
+	var err error
+
+	if d.f, err = os.OpenFile(path, 0, fs.FileMode(os.O_RDWR)); err != nil {
 		return nil, err
 	}
 
-	return &Device{
-		f: f,
-	}, nil
+	if err := d.readInfo(); err != nil {
+		return nil, fmt.Errorf("failed to read device info: %w", err)
+	}
+
+	return d, nil
+}
+
+func (d *Device) Info() DeviceInfo {
+	return d.info
+}
+
+func (d *Device) readInfo() error {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, uint32(0))   // version
+	binary.Write(buf, binary.LittleEndian, [3]uint32{}) // padding for return data
+	b := buf.Bytes()
+	p := unsafe.Pointer(&b[0])
+
+	code := ioctlMakeCode(ioctlDirRead|ioctlDirWrite, 'r', 0x00, uintptr(len(b)))
+	if err := doIoctl(d.f.Fd(), code, p); err != nil {
+		return err
+	}
+
+	v := uint32(0)
+
+	binary.Read(buf, binary.LittleEndian, &v)
+	// ignore version
+
+	binary.Read(buf, binary.LittleEndian, &v)
+	d.info.MaxTracks = int(v)
+
+	binary.Read(buf, binary.LittleEndian, &v)
+	d.info.MaxRxStreams = int(v)
+
+	binary.Read(buf, binary.LittleEndian, &v)
+	d.info.MaxTxStreams = int(v)
+
+	return nil
 }
 
 func (d *Device) AddRxStream(sd RxStreamDescription) (*RxStream, error) {
