@@ -1,9 +1,13 @@
 # Kernel driver modules for LAWO's Ravenna FPGA implementation
 
+This repository contains the kernel driver modules for LAWO's Ravenna FPGA
+implementation.
+
 ## IRQ
 
-This driver supports the IRQ mux. It supports th 16bit and 32bit versions and
-offers as many IRQs as the register width.
+This driver supports the IRQ mux. It supports the 16bit and 32bit variants and
+offers as many IRQs as the register width. All other drivers in this project
+are connected to one of the IRQ muxes.
 
 ### DTS properties
 
@@ -36,6 +40,8 @@ offers as many IRQs as the register width.
 This driver supports the network interfaces and exposed them as Linux network interfaces.
 
 ### SysFS entries
+
+Some of the driver's non-standard statistics and configuration can be read and written through the sysfs interface.
 
 | Entry name				 | Access    | Description                                 |
 |----------------------------------------|:---------:|---------------------------------------------|
@@ -97,9 +103,14 @@ This driver supports the stream interface, including the StreamTables and
 TrackTables for RX and TX, as well as the RTCP statistics interface.
 
 The driver exposes a character device in `/dev` with the name given in the
-corresponding device-tree node.
+corresponding device-tree node which is used with `ioctl()` calls to configure
+the device. Refer to the the UAPI header file `ravenna-stream-device.h` for
+details.
 
 ### DebugFS entries
+
+The driver exposes a debugfs interface under `/sys/kernel/debug/<device-name>/` with
+the following entries:
 
 * `info` shows information on the driver version and the character device.
 For instance:
@@ -109,7 +120,7 @@ Device name: ravenna-stream-device
 Device minor: 124
 ```
 
-* `decoder`
+* `rx/decoder`
 ```
 RX decoder data dropped counter: 0
 RX decoder FIFO overflow counter: 2
@@ -156,6 +167,9 @@ Entry #0 (VALID, ACTIVE)
   0x040 |   -    -    -    -    -    -    -    -    -    -    -    -    -    -    -    -  
   0x050 |   -    -    -    -    -    -    -    -    -    -    -    -    -    -    -    -  
 ```
+
+Note that for each active stream, a range of consecutive tracks is allocated in the track table for all of its channels.
+Channels that are not mapped to a track are shown as `M`. Unallocated tracks are marked with `-`.
 
 * `rx/hash-table`
 ```
@@ -212,6 +226,9 @@ Entry #0 (VALID, ACTIVE)
   0x050 |   -    -    -    -    -    -    -    -    -    -    -    -    -    -    -    -  
 ...
 ```
+
+Note that for each active stream, a range of consecutive tracks is allocated in the track table for all of its channels.
+Channels that are not mapped to a track are shown as `M`. Unallocated tracks are marked with `-`.
 
 ### DTS properties
 
