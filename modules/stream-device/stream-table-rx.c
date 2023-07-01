@@ -162,8 +162,8 @@ void ra_stream_table_rx_del(struct ra_stream_table_rx *sttb, int index)
 
 static void ra_stream_table_rx_reset(struct ra_stream_table_rx *sttb)
 {
-	int i;
 	struct ra_stream_table_rx_fpga fpga = { 0 };
+	int i;
 
 	for (i = 0; i < sttb->max_entries; i++)
 		ra_stream_table_rx_stream_write(sttb, &fpga, i);
@@ -195,9 +195,9 @@ int ra_stream_table_rx_probe(struct device *dev,
 			     struct device_node *np,
 			     struct ra_stream_table_rx *sttb)
 {
-	int ret;
-	struct resource res;
 	resource_size_t size;
+	struct resource res;
+	int ret;
 
 	BUILD_BUG_ON(sizeof(struct ra_stream_table_rx_fpga) != 0x20);
 
