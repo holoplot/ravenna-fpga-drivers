@@ -132,8 +132,8 @@ Stream #0
   Codec: 24-bit
   RTP payload type: 0
   Mode: SYNTONOUS 
-  Track table entry: 8
-  Channel -> Track association:
+  Track table start index: 8
+  Channel -> Track mapping:
          0 ->   8     1 ->   9     2 ->  10     3 ->  11     4 ->  12     5 ->  13     6 ->  14     7 ->  15
 ```
 
@@ -184,8 +184,8 @@ Stream #0
   Codec: 24-bit
   RTP payload type: 0
   Mode: MULTICAST 
-  Track table entry: 32
-  Channel -> Track association:
+  Track table start index: 32
+  Channel -> Track mapping:
          0 ->  32     1 ->  33     2 ->  34     3 ->  35     4 ->  36     5 ->  37     6 ->  38     7 ->  39
 ...
 ```

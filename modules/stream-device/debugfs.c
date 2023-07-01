@@ -5,10 +5,10 @@
 
 #include <ravenna/version.h>
 
-#include "rx.h"
-#include "tx.h"
-
 #include "main.h"
+#include "rx.h"
+#include "track-table.h"
+#include "tx.h"
 
 static int ra_sd_info_show(struct seq_file *s, void *p)
 {
@@ -86,13 +86,11 @@ static void ra_sd_dump_tracks(struct seq_file *s,
 			      const __s16 *tracks,
 			      int num_channels)
 {
-	int i, j;
+	int i, j = 0;
 
-	seq_printf(s, "  Channel -> Track association:");
-	for (i = 0, j = 0; i < num_channels; i++) {
-		if (tracks[i] < 0)
-			continue;
+	seq_printf(s, "  Channel -> Track mapping:");
 
+	ra_for_each_active_track(i, num_channels, tracks) {
 		if (j++ % 8 == 0)
 			seq_puts(s, "\n    ");
 
@@ -178,7 +176,7 @@ static int ra_sd_tx_streams_show(struct seq_file *s, void *p)
 			   st->vlan_tagged	? "VLAN-TAGGED " : "",
 			   st->multicast	? "MULTICAST "   : "UNICAST");
 
-		seq_printf(s, "  Track table entry: %u\n", e->trtb_index);
+		seq_printf(s, "  Track table start index: %u\n", e->trtb_index);
 
 		ra_sd_dump_tracks(s, st->tracks, st->num_channels);
 
@@ -292,7 +290,7 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 			   st->synchronous		? "SYNCHRONOUS " :
 							  "SYNTONOUS ");
 
-		seq_printf(s, "  Track table entry: %u\n", e->trtb_index);
+		seq_printf(s, "  Track table start index: %u\n", e->trtb_index);
 
 		ra_sd_dump_tracks(s, st->tracks, st->num_channels);
 
