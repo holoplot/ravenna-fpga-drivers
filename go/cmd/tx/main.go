@@ -55,6 +55,13 @@ func main() {
 			Msg("Unable to open device file")
 	}
 
+	log.Info().
+		Int("max-tracks", sd.Info().MaxTracks).
+		Int("max-rx-streams", sd.Info().MaxRxStreams).
+		Int("max-tx-streams", sd.Info().MaxTxStreams).
+		Str("path", *deviceFileFlag).
+		Msg("Device file opened")
+
 	txDesc := rsd.TxStreamDescription{
 		CodecType:      rsd.StreamCodecL24,
 		RtpPayloadType: uint8(*rtpPayloadTypeFlag),
