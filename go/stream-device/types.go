@@ -27,6 +27,5 @@ func (c Codec) String() string {
 const (
 	MaxEthernetPacketSize = 1460
 	MaxChannels           = 256
-	MaxTracks             = 256
 	TrackNull             = int16(-1)
 )

@@ -144,7 +144,7 @@ func main() {
 				break
 			}
 
-			if n, err := strconv.Atoi(t); err == nil && n < rsd.MaxTracks {
+			if n, err := strconv.Atoi(t); err == nil && n < sd.Info().MaxTracks {
 				rxDesc.Tracks[i] = int16(n)
 			}
 		}

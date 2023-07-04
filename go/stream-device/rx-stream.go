@@ -33,7 +33,10 @@ type RxStreamDescription struct {
 	RtpSsrc   uint32
 
 	NumChannels uint16
-	Tracks      [MaxTracks]int16
+
+	// Tracks is a map of channel index to track index.
+	// The maximum number of tracks is reported in the device's Info struct.
+	Tracks [MaxChannels]int16
 }
 
 func (sd *RxStreamDescription) toIoctlStruct() []byte {
