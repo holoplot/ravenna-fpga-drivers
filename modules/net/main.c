@@ -211,7 +211,6 @@ static int ra_net_open(struct net_device *ndev)
 	ra_net_irq_enable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE |
 				RA_NET_IRQ_RX_OVERRUN);
 
-	netif_carrier_on(ndev);
 	netif_start_queue(ndev);
 
 	return 0;
@@ -228,7 +227,6 @@ static int ra_net_stop(struct net_device *ndev)
 	phylink_disconnect_phy(priv->phylink);
 
 	netif_stop_queue(ndev);
-	netif_carrier_off(ndev);
 	napi_disable(&priv->napi);
 	ra_net_reset(priv);
 
