@@ -445,7 +445,7 @@ static ssize_t rtp_timestamp_show(struct device *dev,
 	last_rtp_timestamp = priv->last_rtp_timestamp;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return sysfs_emit(buf, "%lld %d\n",
+	return sysfs_emit(buf, "%llu %u\n",
 			  last_ptp_timestamp, last_rtp_timestamp);
 }
 static DEVICE_ATTR_RO(rtp_timestamp);
