@@ -13,13 +13,19 @@ const (
 	ioctlDirRead  = 0x2
 )
 
-func doIoctl(fd uintptr, code uint32, ptr unsafe.Pointer) error {
-	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, fd, uintptr(code), uintptr(ptr))
+func doIoctlWithRet(fd uintptr, code uint32, ptr unsafe.Pointer) (int, error) {
+	ret, _, errno := syscall.Syscall(syscall.SYS_IOCTL, fd, uintptr(code), uintptr(ptr))
 	if errno != 0 {
-		return errors.New(errno.Error())
+		return 0, errors.New(errno.Error())
 	}
 
-	return nil
+	return int(ret), nil
+}
+
+func doIoctl(fd uintptr, code uint32, ptr unsafe.Pointer) error {
+	_, err := doIoctlWithRet(fd, code, ptr)
+
+	return err
 }
 
 func ioctlMakeCode(dir, typ, nr int, size uintptr) uint32 {

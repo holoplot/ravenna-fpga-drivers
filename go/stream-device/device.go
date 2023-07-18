@@ -70,11 +70,6 @@ func (d *Device) readInfo() error {
 }
 
 func (d *Device) AddRxStream(sd RxStreamDescription) (*RxStream, error) {
-	rx := RxStream{
-		device:      d,
-		description: sd,
-	}
-
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, uint32(0)) // version
 	buf.Write(sd.toIoctlStruct())
@@ -82,13 +77,17 @@ func (d *Device) AddRxStream(sd RxStreamDescription) (*RxStream, error) {
 	p := unsafe.Pointer(&b[0])
 
 	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x30, uintptr(len(b)))
-	err := doIoctl(d.f.Fd(), code, p)
+	index, err := doIoctlWithRet(d.f.Fd(), code, p)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &rx, nil
+	return &RxStream{
+		device:      d,
+		description: sd,
+		index:       index,
+	}, nil
 }
 
 func (d *Device) updateRxStream(rx *RxStream, sd RxStreamDescription) error {
@@ -115,11 +114,6 @@ func (d *Device) deleteRxStream(rx *RxStream) error {
 }
 
 func (d *Device) AddTxStream(sd TxStreamDescription) (*TxStream, error) {
-	tx := TxStream{
-		device:      d,
-		description: sd,
-	}
-
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, uint32(0)) // version
 	buf.Write(sd.toIoctlStruct())
@@ -127,12 +121,17 @@ func (d *Device) AddTxStream(sd TxStreamDescription) (*TxStream, error) {
 	p := unsafe.Pointer(&b[0])
 
 	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x20, uintptr(len(b)))
-	err := doIoctl(d.f.Fd(), code, p)
+
+	index, err := doIoctlWithRet(d.f.Fd(), code, p)
 	if err != nil {
 		return nil, err
 	}
 
-	return &tx, nil
+	return &TxStream{
+		device:      d,
+		description: sd,
+		index:       index,
+	}, nil
 }
 
 func (d *Device) updateTxStream(tx *TxStream, sd TxStreamDescription) error {
