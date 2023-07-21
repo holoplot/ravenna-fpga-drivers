@@ -227,5 +227,5 @@ static struct platform_driver ra_sd_driver =
 module_platform_driver(ra_sd_driver);
 
 MODULE_AUTHOR("Daniel Mack <daniel.mack@holoplot.com");
-MODULE_DESCRIPTION("Ravenna RX driver");
+MODULE_DESCRIPTION("Ravenna stream device driver");
 MODULE_LICENSE("GPL");
