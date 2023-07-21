@@ -137,7 +137,7 @@ int ra_sd_read_rtcp_tx_stat_ioctl(struct ra_sd_priv *priv,
 	mutex_lock(&priv->rtcp_tx.mutex);
 
 	WRITE_ONCE(priv->rtcp_tx.ready, false);
-	ra_sd_iow(priv, RA_SD_RX_PAGE_SELECT, cmd.index);
+	ra_sd_iow(priv, RA_SD_TX_PAGE_SELECT, cmd.index);
 
 	ret = wait_event_interruptible_timeout(priv->rtcp_tx.wait,
 					       priv->rtcp_tx.ready,
