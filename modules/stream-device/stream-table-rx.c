@@ -83,8 +83,8 @@ static void ra_stream_table_rx_fill(const struct ra_sd_rx_stream *stream,
 
 	fpga->destination_ip_primary = be32_to_cpu(pri->destination_ip);
 	fpga->destination_ip_secondary = be32_to_cpu(sec->destination_ip);
-	fpga->destination_port_secondary = be16_to_cpu(sec->destination_port);
 	fpga->destination_port_primary = be16_to_cpu(pri->destination_port);
+	fpga->destination_port_secondary = be16_to_cpu(sec->destination_port);
 
 	/*
 	 * Non-redundant stream records must have the same entries for

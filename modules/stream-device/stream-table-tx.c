@@ -143,8 +143,8 @@ static void ra_stream_table_tx_fill(const struct ra_sd_tx_stream *stream,
 		sec->destination_mac[4] << 8 |
 		sec->destination_mac[5] << 0;
 
-	fpga->vlan_tag_secondary = be16_to_cpu(sec->vlan_tag);
 	fpga->vlan_tag_primary = be16_to_cpu(pri->vlan_tag);
+	fpga->vlan_tag_secondary = be16_to_cpu(sec->vlan_tag);
 
 	fpga->ttl = stream->ttl;
 	fpga->dscp_tos = stream->dscp_tos;
