@@ -107,8 +107,8 @@ static void ra_stream_table_rx_fill(const struct ra_sd_rx_stream *stream,
 	fpga->jitter_buffer_margin = stream->jitter_buffer_margin;
 	fpga->rtp_ssrc = stream->rtp_ssrc;
 	fpga->rtp_payload_type = stream->rtp_payload_type;
+	fpga->rtp_filter_vlan_id = be16_to_cpu(stream->vlan_tag) & 0xfff;
 
-	fpga->rtp_filter_vlan_id = be16_to_cpu(stream->vlan_tag) & 0x3f;
 	if (stream->rtp_filter)
 		fpga->rtp_filter_vlan_id |= RA_STREAM_TABLE_RX_RTP_FILTER;
 
