@@ -166,6 +166,24 @@ static int ra_net_ethtool_get_module_eeprom(struct net_device *ndev,
 	return -EOPNOTSUPP;
 }
 
+static int
+ra_net_ethtool_get_link_ksettings(struct net_device *ndev,
+				  struct ethtool_link_ksettings *cmd)
+{
+	struct ra_net_priv *priv = netdev_priv(ndev);
+
+	return phylink_ethtool_ksettings_get(priv->phylink, cmd);
+}
+
+static int
+ra_net_ethtool_set_link_ksettings(struct net_device *ndev,
+				  const struct ethtool_link_ksettings *cmd)
+{
+	struct ra_net_priv *priv = netdev_priv(ndev);
+
+	return phylink_ethtool_ksettings_set(priv->phylink, cmd);
+}
+
 const struct ethtool_ops ra_net_ethtool_ops = {
 	.get_drvinfo		= ra_net_ethtool_getdrvinfo,
 	.get_strings		= ra_net_get_strings,
@@ -179,6 +197,6 @@ const struct ethtool_ops ra_net_ethtool_ops = {
 	.get_ts_info		= ra_net_ethtool_get_ts_info,
 	.get_module_info	= ra_net_ethtool_get_module_info,
 	.get_module_eeprom	= ra_net_ethtool_get_module_eeprom,
-	.get_link_ksettings	= phy_ethtool_get_link_ksettings,
-	.set_link_ksettings	= phy_ethtool_set_link_ksettings,
+	.get_link_ksettings	= ra_net_ethtool_get_link_ksettings,
+	.set_link_ksettings	= ra_net_ethtool_set_link_ksettings,
 };
