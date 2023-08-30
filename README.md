@@ -45,16 +45,6 @@ Some of the driver's non-standard statistics and configuration can be read and w
 
 | Entry name				 | Access    | Description                                 |
 |----------------------------------------|:---------:|---------------------------------------------|
-| `udp_throttled_packets`                | R/O       | `RA_NET_PP_CNT_UDP_THROTTLE`                |
-| `rx_packets_parsed`                    | R/O       | `RA_NET_PP_CNT_RX_PARSED`                   |
-| `rx_queue_errors`                      | R/O       | `RA_NET_PP_CNT_RX_QUEUE_ERR`                |
-| `rx_checksum_errors`                   | R/O       | `RA_NET_PP_CNT_RX_IP_CHK_ERR`               |
-| `rx_stream_packets_dropped`            | R/O       | `RA_NET_PP_CNT_RX_STREAM_DROP`              |
-| `rx_stream_packets`                    | R/O       | `RA_NET_PP_CNT_RX_STREAM`                   |
-| `rx_legacy_packets`                    | R/O       | `RA_NET_PP_CNT_RX_LEGACY`                   |
-| `tx_stream_packets`                    | R/O       | `RA_NET_PP_CNT_TX_STREAM`                   |
-| `tx_legacy_packets`                    | R/O       | `RA_NET_PP_CNT_TX_LEGACY`                   |
-| `tx_stream_packets_lost`               | R/O       | `RA_NET_PP_CNT_TX_STREAM_LOST`              |
 | `rtp_global_offset`                    | R/W       | `RA_NET_RTP_GLOBAL_OFFSET`                  |
 | `counter_reset`                        | W/O       | `RA_NET_PP_CNT_RST`                         |
 
