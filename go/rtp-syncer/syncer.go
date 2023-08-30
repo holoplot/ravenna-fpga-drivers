@@ -33,12 +33,11 @@ func (s *RtpSyncer) globalWordClockCounter(ptpTimestamp uint64, rtpTimestamp uin
 
 	remainder.Mul(remainder, big.NewInt(2))
 
-	if remainder.Cmp(div) > 0 {
+	if remainder.Cmp(div) >= 0 {
 		r.Add(r, big.NewInt(1))
 	}
 
 	r.Sub(r, big.NewInt(int64(rtpTimestamp)))
-	r.And(r, big.NewInt(0xffffffff))
 
 	return uint32(r.Int64())
 }
@@ -61,10 +60,10 @@ func (s *RtpSyncer) Run(ctx context.Context, interval time.Duration, cb UpdateFu
 			if offset > s.lastOffset+1 || offset < s.lastOffset-1 {
 				if err := s.nd.SetRTPGlobalOffset(uint64(offset)); err != nil {
 					return fmt.Errorf("failed to set timestamp: %w", err)
-				} else {
-					cb(ctx, s, s.lastOffset, offset)
-					s.lastOffset = offset
 				}
+
+				cb(ctx, s, s.lastOffset, offset)
+				s.lastOffset = offset
 			}
 
 		case <-ctx.Done():
