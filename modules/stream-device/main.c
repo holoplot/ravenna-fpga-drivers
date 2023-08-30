@@ -34,7 +34,6 @@ int ra_sd_read_info_ioctl(struct ra_sd_priv *priv,
 			  void __user *buf)
 {
 	struct ra_sd_read_info_cmd cmd;
-	int ret;
 
 	if (size != sizeof(cmd))
 		return -EINVAL;
