@@ -129,15 +129,14 @@ static void ra_stream_table_rx_fill(const struct ra_sd_rx_stream *stream,
 
 void ra_stream_table_rx_set(struct ra_stream_table_rx *sttb,
 			    struct ra_sd_rx_stream *stream,
-			    int index, int trtb_index,
-			    bool invalidate)
+			    int index, int trtb_index)
 {
-	struct ra_stream_table_rx_fpga fpga;
+	struct ra_stream_table_rx_fpga fpga = { 0 };
+
+	/* Set the VLD bit to 0 before touching other fields */
+	ra_stream_table_rx_stream_write(sttb, &fpga, index);
 
 	ra_stream_table_rx_fill(stream, &fpga, trtb_index);
-
-	if (invalidate)
-		ra_stream_table_rx_stream_write(sttb, &fpga, index);
 
 	fpga.misc_control |=
 		RA_STREAM_TABLE_RX_MISC_VLD |

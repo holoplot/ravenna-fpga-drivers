@@ -149,8 +149,7 @@ int ra_sd_rx_add_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 	ra_sd_rx_tracks_mark_used(rx, &e->stream);
 	ra_track_table_set(&rx->trtb, e->trtb_index,
 			   e->stream.num_channels, e->stream.tracks);
-	ra_stream_table_rx_set(&rx->sttb, &e->stream, index,
-			       e->trtb_index, true);
+	ra_stream_table_rx_set(&rx->sttb, &e->stream, index, e->trtb_index);
 
 	dev_dbg(rx->dev, "Added RX stream with index %d", index);
 
@@ -170,7 +169,6 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 {
 	struct ra_sd_update_rx_stream_cmd cmd;
 	struct ra_sd_rx_stream_elem *e;
-	bool invalidate = false;
 	int ret;
 
 	if (size != sizeof(cmd))
@@ -237,7 +235,7 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 					   e->stream.num_channels,
 					   e->stream.tracks);
 			ra_stream_table_rx_set(&rx->sttb, &e->stream,
-					       cmd.index, e->trtb_index, false);
+					       cmd.index, e->trtb_index);
 
 			ret = aret;
 			goto out_unlock;
@@ -246,13 +244,6 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 		e->trtb_index = ret;
 	}
 
-	/* We need to flush the previous hash table entry in case the IP/port changes */
-	if (e->stream.primary.destination_ip     != cmd.stream.primary.destination_ip     ||
-	    e->stream.primary.destination_port   != cmd.stream.primary.destination_port   ||
-	    e->stream.secondary.destination_ip   != cmd.stream.secondary.destination_ip   ||
-	    e->stream.secondary.destination_port != cmd.stream.secondary.destination_port)
-		invalidate = true;
-
 	ra_sd_rx_tracks_mark_unused(rx, &e->stream);
 
 	memcpy(&e->stream, &cmd.stream, sizeof(e->stream));
@@ -260,8 +251,7 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 	ra_sd_rx_tracks_mark_used(rx, &e->stream);
 	ra_track_table_set(&rx->trtb, e->trtb_index,
 			   e->stream.num_channels, e->stream.tracks);
-	ra_stream_table_rx_set(&rx->sttb, &e->stream, cmd.index,
-			       e->trtb_index, invalidate);
+	ra_stream_table_rx_set(&rx->sttb, &e->stream, cmd.index, e->trtb_index);
 
 out_unlock:
 	mutex_unlock(&rx->mutex);

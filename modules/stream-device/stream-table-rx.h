@@ -13,8 +13,7 @@ struct ra_stream_table_rx {
 
 void ra_stream_table_rx_set(struct ra_stream_table_rx *sttb,
 			    struct ra_sd_rx_stream *stream,
-			    int index, int trtb_index,
-			    bool invalidate);
+			    int index, int trtb_index);
 
 void ra_stream_table_rx_del(struct ra_stream_table_rx *sttb,
 			    int index);
