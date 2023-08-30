@@ -80,54 +80,6 @@ func (d *Device) writeNumericAttribute(name string, v uint64) error {
 	return d.writeStringAttribute(name, s)
 }
 
-func (d *Device) GetRavCoreVersion() (string, error) {
-	return d.readStringAttribute("rav_core_version")
-}
-
-func (d *Device) GetDriverVersion() (string, error) {
-	return d.readStringAttribute("driver_version")
-}
-
-func (d *Device) GetUDPThrottledPackets() (uint64, error) {
-	return d.readNumericAttribute("udp_throttled_packets")
-}
-
-func (d *Device) GetRxPacketsParsed() (uint64, error) {
-	return d.readNumericAttribute("rx_packets_parsed")
-}
-
-func (d *Device) GetRxQueueErrors() (uint64, error) {
-	return d.readNumericAttribute("rx_queue_errors")
-}
-
-func (d *Device) GetRxChecksumErrors() (uint64, error) {
-	return d.readNumericAttribute("rx_checksum_errors")
-}
-
-func (d *Device) GetRxStreamPacketsDropped() (uint64, error) {
-	return d.readNumericAttribute("rx_stream_packets_dropped")
-}
-
-func (d *Device) GetRxStreamPackets() (uint64, error) {
-	return d.readNumericAttribute("rx_stream_packets")
-}
-
-func (d *Device) GetRxLegacyPackets() (uint64, error) {
-	return d.readNumericAttribute("rx_legacy_packets")
-}
-
-func (d *Device) GetTxStreamPackets() (uint64, error) {
-	return d.readNumericAttribute("tx_stream_packets")
-}
-
-func (d *Device) GetTxLegacyPackets() (uint64, error) {
-	return d.readNumericAttribute("tx_legacy_packets")
-}
-
-func (d *Device) GetTxStreamPacketsLost() (uint64, error) {
-	return d.readNumericAttribute("tx_stream_packets_lost")
-}
-
 func (d *Device) GetRTPGlobalOffset() (uint64, error) {
 	return d.readNumericAttribute("rtp_global_offset")
 }
