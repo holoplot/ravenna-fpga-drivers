@@ -39,9 +39,14 @@ are connected to one of the IRQ muxes.
 
 This driver supports the network interfaces and exposed them as Linux network interfaces.
 
+### Statistics
+
+The driver exposes a number of non-standard statistics through the `ethtool` API.
+Users can use `ethtool -S <device>` to read the statistics.
+
 ### SysFS entries
 
-Some of the driver's non-standard statistics and configuration can be read and written through the sysfs interface.
+Some more non-standard configuration can be read and written through the sysfs interface.
 
 | Entry name				 | Access    | Description                                 |
 |----------------------------------------|:---------:|---------------------------------------------|
@@ -80,10 +85,10 @@ Some of the driver's non-standard statistics and configuration can be read and w
 
         lawo,ptp-clock = <&ra_ptp0>;
 
-        lawo,ptp-delay-path-rx-1000mbit-nsec = <0x6e>;
-        lawo,ptp-delay-path-rx-100mbit-nsec = <0x2e>;
-        lawo,ptp-delay-path-rx-10mbit-nsec = <0x8>;
-        lawo,ptp-delay-path-tx-nsec = <0x1900>;
+        lawo,ptp-delay-path-rx-1000mbit-nsec = <0x2e0>;
+        lawo,ptp-delay-path-rx-100mbit-nsec = <0x68>;
+        lawo,ptp-delay-path-rx-10mbit-nsec = <0x1900>;
+        lawo,ptp-delay-path-tx-nsec = <0x08>;
     };
 ```
 
