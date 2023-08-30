@@ -53,11 +53,49 @@ static void ra_net_mac_link_up(struct phylink_config *config,
 	ra_net_iow(priv, RA_NET_AUTO_SPEED_CTRL, v);
 }
 
+static void ra_net_pcs_get_state(struct phylink_config *config,
+				 struct phylink_link_state *state)
+{
+	struct net_device *ndev = to_net_dev(config->dev);
+	struct ra_net_priv *priv = netdev_priv(ndev);
+	u32 v;
+
+	v = ra_net_ior(priv, RA_NET_LINK_SPEED_STATUS);
+
+	if (v & RA_NET_LINK_SPEED_STATUS_UP) {
+		state->link = 1;
+
+		switch (v & RA_NET_LINK_SPEED_STATUS_SPEED_MASK) {
+		case RA_NET_LINK_SPEED_STATUS_SPEED_10:
+			state->speed = SPEED_10;
+			break;
+		case RA_NET_LINK_SPEED_STATUS_SPEED_100:
+			state->speed = SPEED_100;
+			break;
+		case RA_NET_LINK_SPEED_STATUS_SPEED_1000:
+			state->speed = SPEED_1000;
+			break;
+		default:
+			state->speed = SPEED_UNKNOWN;
+			break;
+		}
+	} else {
+		state->link = 0;
+		state->speed = SPEED_UNKNOWN;
+	}
+
+	if (v & RA_NET_LINK_SPEED_STATUS_FULL_DUPLEX)
+		state->duplex = DUPLEX_FULL;
+	else
+		state->duplex = DUPLEX_HALF;
+}
+
 static const struct phylink_mac_ops ra_net_phylink_ops = {
-	.validate	= ra_net_validate,
-	.mac_config	= ra_net_mac_config,
-	.mac_link_down	= ra_net_mac_link_down,
-	.mac_link_up	= ra_net_mac_link_up,
+	.validate		= ra_net_validate,
+	.mac_config		= ra_net_mac_config,
+	.mac_link_down		= ra_net_mac_link_down,
+	.mac_link_up		= ra_net_mac_link_up,
+	.mac_pcs_get_state	= ra_net_pcs_get_state,
 };
 
 static void ra_net_phylink_destroy(void *phylink)
@@ -82,7 +120,7 @@ int ra_net_phylink_init(struct ra_net_priv *priv)
 	__set_bit(PHY_INTERFACE_MODE_RGMII_TXID, priv->phylink_config.supported_interfaces);
 
 	priv->phylink = phylink_create(&priv->phylink_config, priv->dev->fwnode,
-				     phy_mode, &ra_net_phylink_ops);
+				       phy_mode, &ra_net_phylink_ops);
 	if (IS_ERR(priv->phylink))
 		return PTR_ERR(priv->phylink);
 
