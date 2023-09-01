@@ -136,8 +136,11 @@ void ra_stream_table_rx_set(struct ra_stream_table_rx *sttb,
 	/* Set the VLD bit to 0 before touching other fields */
 	ra_stream_table_rx_stream_write(sttb, &fpga, index);
 
+	/* Fill all the details, but don't touch the misc control bits */
 	ra_stream_table_rx_fill(stream, &fpga, trtb_index);
+	ra_stream_table_rx_stream_write(sttb, &fpga, index);
 
+	/* Now activate the stream and trigger a hash operation */
 	fpga.misc_control |=
 		RA_STREAM_TABLE_RX_MISC_VLD |
 		RA_STREAM_TABLE_RX_MISC_ACT |
