@@ -59,6 +59,7 @@ func main() {
 		Msg("Device file opened")
 
 	rxDesc := rsd.RxStreamDescription{
+		Active:            true,
 		SyncSource:        *syncSourceFlag,
 		HitlessProtection: *hitlessFlag,
 

@@ -96,7 +96,7 @@ struct ra_sd_rx_stream {
 	__u8 codec;
 	__u8 rtp_payload_type;
 
-	__u8 reserved_1[1];
+	__bool active;
 
 	__be16 vlan_tag;
 	__u16 jitter_buffer_margin;
@@ -152,7 +152,9 @@ struct ra_sd_tx_stream {
 	__u8 dscp_tos;
 	__u8 num_samples;
 
-	__u8 reserved_0[2];
+	__bool active;
+
+	__u8 reserved_0[1];
 
 	__u16 next_rtp_sequence_num;
 	__u16 num_channels;

@@ -28,6 +28,7 @@ static struct ra_sd_rx_stream rx_stream = {
 	.vlan_tagged 		= 0,
 	.hitless_protection 	= 0,
 	.synchronous 		= 0,
+	.active			= 1,
 
 	.rtp_offset 		= 500,
 	.jitter_buffer_margin 	= 500,
@@ -47,6 +48,8 @@ static struct ra_sd_tx_stream tx_stream = {
 	.dscp_tos		= 0,
 	.vlan_tagged		= 0,
 	.multicast		= 1,
+
+	.active			= 1,
 
 	.use_primary		= 1,
 	.use_secondary		= 0,

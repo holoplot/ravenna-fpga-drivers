@@ -23,6 +23,7 @@ type TxStreamDescriptionNetworkInterface struct {
 type TxStreamDescription struct {
 	Primary, Secondary TxStreamDescriptionNetworkInterface
 
+	Active       bool
 	Multicast    bool
 	VlanTagged   bool
 	UsePrimary   bool
@@ -77,7 +78,9 @@ func (sd *TxStreamDescription) toIoctlStruct() []byte {
 	binary.Write(buf, binary.LittleEndian, sd.DscpTos)
 	binary.Write(buf, binary.LittleEndian, sd.NumSamples)
 
-	binary.Write(buf, binary.LittleEndian, [2]uint8{0}) // padding
+	binary.Write(buf, binary.LittleEndian, sd.Active)
+
+	binary.Write(buf, binary.LittleEndian, [1]uint8{0}) // padding
 
 	binary.Write(buf, binary.LittleEndian, sd.NextRtpSequenceNum)
 	binary.Write(buf, binary.LittleEndian, sd.NumChannels)

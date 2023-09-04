@@ -17,6 +17,7 @@ type RxStream struct {
 type RxStreamDescription struct {
 	PrimaryDestination, SecondaryDestination net.UDPAddr
 
+	Active            bool
 	SyncSource        bool
 	VlanTagged        bool
 	HitlessProtection bool
@@ -59,7 +60,7 @@ func (sd *RxStreamDescription) toIoctlStruct() []byte {
 	binary.Write(buf, binary.LittleEndian, sd.CodecType)
 	binary.Write(buf, binary.LittleEndian, sd.RtpPayloadType)
 
-	binary.Write(buf, binary.LittleEndian, [1]uint8{0})
+	binary.Write(buf, binary.LittleEndian, sd.Active)
 
 	binary.Write(buf, binary.LittleEndian, sd.VlanTag)
 	binary.Write(buf, binary.LittleEndian, sd.JitterBufferMargin)

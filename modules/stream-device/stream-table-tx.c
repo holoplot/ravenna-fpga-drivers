@@ -94,6 +94,9 @@ static void ra_stream_table_tx_fill(const struct ra_sd_tx_stream *stream,
 
 	memset(fpga, 0, sizeof(*fpga));
 
+	if (stream->active)
+		fpga->misc_control |= RA_STREAM_TABLE_TX_MISC_ACT;
+
 	if (stream->vlan_tagged)
 		fpga->misc_control |= RA_STREAM_TABLE_TX_MISC_VLAN;
 
@@ -171,8 +174,7 @@ void ra_stream_table_tx_set(struct ra_stream_table_tx *sttb,
 		ra_stream_table_tx_stream_write(sttb, &fpga, index);
 
 	fpga.misc_control |=
-		RA_STREAM_TABLE_TX_MISC_VLD |
-		RA_STREAM_TABLE_TX_MISC_ACT;
+		RA_STREAM_TABLE_TX_MISC_VLD;
 
 	ra_stream_table_tx_stream_write(sttb, &fpga, index);
 }

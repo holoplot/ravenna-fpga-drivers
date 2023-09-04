@@ -63,6 +63,7 @@ func main() {
 		Msg("Device file opened")
 
 	txDesc := rsd.TxStreamDescription{
+		Active:         true,
 		CodecType:      rsd.StreamCodecL24,
 		RtpPayloadType: uint8(*rtpPayloadTypeFlag),
 

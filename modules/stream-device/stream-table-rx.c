@@ -114,6 +114,9 @@ static void ra_stream_table_rx_fill(const struct ra_sd_rx_stream *stream,
 
 	fpga->codec = ra_sd_codec_fpga_code(stream->codec);
 
+	if (stream->active)
+		fpga->misc_control |= RA_STREAM_TABLE_RX_MISC_ACT;
+
 	if (stream->sync_source)
 		fpga->misc_control |= RA_STREAM_TABLE_RX_MISC_SYNC_SOURCE;
 
@@ -136,14 +139,13 @@ void ra_stream_table_rx_set(struct ra_stream_table_rx *sttb,
 	/* Set the VLD bit to 0 before touching other fields */
 	ra_stream_table_rx_stream_write(sttb, &fpga, index);
 
-	/* Fill all the details, but don't touch the misc control bits */
+	/* Fill all the details, but don't touch the misc bits VLD and EXEC_HASH */
 	ra_stream_table_rx_fill(stream, &fpga, trtb_index);
 	ra_stream_table_rx_stream_write(sttb, &fpga, index);
 
 	/* Now activate the stream and trigger a hash operation */
 	fpga.misc_control |=
 		RA_STREAM_TABLE_RX_MISC_VLD |
-		RA_STREAM_TABLE_RX_MISC_ACT |
 		RA_STREAM_TABLE_RX_MISC_EXEC_HASH;
 
 	ra_stream_table_rx_stream_write(sttb, &fpga, index);
