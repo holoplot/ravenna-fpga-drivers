@@ -382,6 +382,7 @@ static void ra_net_tx_timeout(struct net_device *ndev, unsigned int txqueue)
 static void ra_net_set_rx_mode(struct net_device *ndev)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
+	unsigned long flags;
 	u32 ctrl;
 
 	dev_dbg(priv->dev, "%s\n", __func__);
@@ -397,7 +398,7 @@ static void ra_net_set_rx_mode(struct net_device *ndev)
 	 * the reception of packets with multicast addresses.
 	 */
 
-	spin_lock(&priv->reg_lock);
+	spin_lock_irqsave(&priv->reg_lock, flags);
 
 	ctrl = ra_net_ior(priv, RA_NET_MAC_RX_CTRL);
 	ctrl &= ~RA_NET_MAC_RX_CTRL_PROMISCUOUS_EN;
@@ -423,7 +424,7 @@ static void ra_net_set_rx_mode(struct net_device *ndev)
 
 	ra_net_iow(priv, RA_NET_MAC_RX_CTRL, ctrl);
 
-	spin_unlock(&priv->reg_lock);
+	spin_unlock_irqrestore(&priv->reg_lock, flags);
 }
 
 static int ra_net_eth_ioctl(struct net_device *ndev, struct ifreq *rq, int cmd)
