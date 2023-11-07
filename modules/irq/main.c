@@ -15,7 +15,7 @@ struct ra_irq_priv {
 	struct device *dev;
 	struct irq_domain *domain;
 	int width;
-	spinlock_t lock;
+	raw_spinlock_t lock;
 };
 
 static inline u32 ra_irq_ior(struct ra_irq_priv *priv, off_t reg)
@@ -50,11 +50,11 @@ static void ra_irq_irqchip_mask(struct irq_data *d)
 	unsigned long flags;
 	u32 v;
 
-	spin_lock_irqsave(&priv->lock, flags);
+	raw_spin_lock_irqsave(&priv->lock, flags);
 	v = ra_irq_ior(priv, RA_IRQ_MASK_REG);
 	v |= BIT(d->hwirq);
 	ra_irq_iow(priv, RA_IRQ_MASK_REG, v);
-	spin_unlock_irqrestore(&priv->lock, flags);
+	raw_spin_unlock_irqrestore(&priv->lock, flags);
 }
 
 static void ra_irq_irqchip_unmask(struct irq_data *d)
@@ -63,11 +63,11 @@ static void ra_irq_irqchip_unmask(struct irq_data *d)
 	unsigned long flags;
 	u32 v;
 
-	spin_lock_irqsave(&priv->lock, flags);
+	raw_spin_lock_irqsave(&priv->lock, flags);
 	v = ra_irq_ior(priv, RA_IRQ_MASK_REG);
 	v &= ~BIT(d->hwirq);
 	ra_irq_iow(priv, RA_IRQ_MASK_REG, v);
-	spin_unlock_irqrestore(&priv->lock, flags);
+	raw_spin_unlock_irqrestore(&priv->lock, flags);
 }
 
 static struct irq_chip ra_irq_irq_chip = {
@@ -138,7 +138,7 @@ static int ra_irq_drv_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	platform_set_drvdata(pdev, priv);
-	spin_lock_init(&priv->lock);
+	raw_spin_lock_init(&priv->lock);
 
 	priv->dev = dev;
 	priv->width = (unsigned long)of_device_get_match_data(dev);
