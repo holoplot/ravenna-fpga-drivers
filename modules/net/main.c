@@ -278,7 +278,7 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 				     skb_headroom(skb), RA_NET_TX_PADDING_BYTES,
 				     skb_tailroom(skb), (ETH_ZLEN - skb->len));
 
-		tmp_buf = kzalloc(aligned_len, GFP_KERNEL);
+		tmp_buf = kzalloc(aligned_len, GFP_ATOMIC);
 		if (!tmp_buf) {
 			ret = -ENOMEM;
 			goto out;
