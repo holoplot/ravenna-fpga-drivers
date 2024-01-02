@@ -3,6 +3,8 @@
 This repository contains the kernel driver modules for LAWO's Ravenna FPGA
 implementation.
 
+The minimum required kernel version for these drivers is **6.6**.
+
 ## IRQ
 
 This driver supports the IRQ mux. It supports the 16bit and 32bit variants and
