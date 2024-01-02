@@ -644,6 +644,11 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	val = ra_net_ior(priv, RA_NET_RAV_CORE_VERSION);
+
+	dev_info(dev, "Ravenna ethernet driver, core version: %02x.%02x\n",
+		 (val >> 8) & 0xff, val & 0xff);
+
 	return 0;
 }
 
