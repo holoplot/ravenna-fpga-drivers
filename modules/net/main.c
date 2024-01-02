@@ -614,8 +614,10 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 	of_property_read_u32(node, "lawo,ptp-delay-path-rx-100mbit-nsec", &tmp);
 	val |= tmp << 16;
 
-	dev_dbg(dev, "RA_NET_PTP_DELAY_ADJUST_1 = 0x%08x\n", val);
-	ra_net_iow(priv, RA_NET_PTP_DELAY_ADJUST_1, val);
+	if (val != 0) {
+		dev_dbg(dev, "RA_NET_PTP_DELAY_ADJUST_1 = 0x%08x\n", val);
+		ra_net_iow(priv, RA_NET_PTP_DELAY_ADJUST_1, val);
+	}
 
 	tmp = 0;
 	of_property_read_u32(node, "lawo,ptp-delay-path-rx-10mbit-nsec", &tmp);
@@ -625,8 +627,10 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 	of_property_read_u32(node, "lawo,ptp-delay-path-tx-nsec", &tmp);
 	val |= tmp << 16;
 
-	dev_dbg(dev, "RA_NET_PTP_DELAY_ADJUST_2 = 0x%08x\n", val);
-	ra_net_iow(priv, RA_NET_PTP_DELAY_ADJUST_2, val);
+	if (val != 0) {
+		dev_dbg(dev, "RA_NET_PTP_DELAY_ADJUST_2 = 0x%08x\n", val);
+		ra_net_iow(priv, RA_NET_PTP_DELAY_ADJUST_2, val);
+	}
 
 	tmp = 5000;
 	of_property_read_u32(node, "lawo,watchdog-timeout-ms", &tmp);
