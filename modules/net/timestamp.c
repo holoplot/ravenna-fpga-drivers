@@ -20,7 +20,7 @@ void ra_net_tx_ts_irq(struct ra_net_priv *priv)
 	spin_lock(&priv->tx_ts.lock);
 
 	if (unlikely((priv->tx_ts.ts_wr_idx+1) % RA_NET_TX_TS_LIST_SIZE ==
-                      priv->tx_ts.ts_rd_idx)) {
+		      priv->tx_ts.ts_rd_idx)) {
 		priv->tx_ts.reenable_irq = true;
 		ra_net_pp_irq_disable(priv, RA_NET_PP_IRQ_PTP_TX_TS_IRQ_AVAILABLE);
 		dev_err(dev, "tx timestamp buffer of %s full, IRQ disabled => %08x\n",
@@ -258,23 +258,27 @@ bool ra_net_tx_ts_queue(struct ra_net_priv *priv, struct sk_buff *skb)
 	return true;
 }
 
-void ra_net_rx_skb_stamp(struct ra_net_priv *priv, struct sk_buff *skb,
-			 struct ptp_packet_fpga_timestamp *ts)
+void ra_net_rx_read_timestamp(struct ra_net_priv *priv, struct sk_buff *skb)
 {
 	struct skb_shared_hwtstamps *ts_ptr = skb_hwtstamps(skb);
+	struct ptp_packet_fpga_timestamp ts;
 	u64 ns;
+
+	BUILD_BUG_ON(!IS_ALIGNED(sizeof(ts), sizeof(u32)));
 
 	if (!priv->rx_ts_enable)
 		return;
 
-	if (ts->start_of_ts != RA_NET_TX_TIMESTAMP_START_OF_TS) {
+	ra_net_ior_rep(priv, RA_NET_RX_FIFO, &ts, sizeof(ts));
+
+	if (ts.start_of_ts != RA_NET_TX_TIMESTAMP_START_OF_TS) {
 		dev_dbg(priv->dev, "Rx timestamp has no SOT\n");
 		return;
 	}
 
 	dev_dbg(priv->dev, "Valid rx timestamp found\n");
 
-	ns = (s64)ts->seconds * NSEC_PER_SEC + ts->nanoseconds;
+	ns = (s64)ts.seconds * NSEC_PER_SEC + ts.nanoseconds;
 	ts_ptr->hwtstamp = ns_to_ktime(ns);
 }
 

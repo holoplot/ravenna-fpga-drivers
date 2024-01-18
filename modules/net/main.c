@@ -53,15 +53,8 @@ static int ra_net_napi_poll(struct napi_struct *napi, int budget)
 		/* FPGA does IP checksum offload for receive packets */
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-		if (status & RA_NET_RX_STATE_PACKET_HAS_PTP_TS) {
-			struct ptp_packet_fpga_timestamp packet_ts;
-
-			BUILD_BUG_ON(!IS_ALIGNED(sizeof(packet_ts), sizeof(u32)));
-
-			ra_net_ior_rep(priv, RA_NET_RX_FIFO,
-				       &packet_ts, sizeof(packet_ts));
-			ra_net_rx_skb_stamp(priv, skb, &packet_ts);
-		}
+		if (status & RA_NET_RX_STATE_PACKET_HAS_PTP_TS)
+			ra_net_rx_read_timestamp(priv, skb);
 
 		priv->ndev->stats.rx_packets++;
 		priv->ndev->stats.rx_bytes += pkt_len;

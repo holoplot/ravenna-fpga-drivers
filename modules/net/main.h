@@ -134,7 +134,6 @@ bool ra_net_tx_ts_queue(struct ra_net_priv *priv, struct sk_buff *skb);
 void ra_net_tx_ts_init(struct ra_net_priv *priv);
 int ra_net_hwtstamp_ioctl(struct net_device *ndev,
 			  struct ifreq *ifr, int cmd);
-void ra_net_rx_skb_stamp(struct ra_net_priv *priv, struct sk_buff *skb,
-			 struct ptp_packet_fpga_timestamp *ts);
+void ra_net_rx_read_timestamp(struct ra_net_priv *priv, struct sk_buff *skb);
 
 #endif /* RAVENNA_NET_MAIN_H */
