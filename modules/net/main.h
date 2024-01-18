@@ -5,6 +5,7 @@
 #include <linux/workqueue.h>
 #include <linux/phylink.h>
 #include <linux/ptp_classify.h>
+#include <linux/dmaengine.h>
 
 #include "regs.h"
 
@@ -56,6 +57,9 @@ struct ra_net_priv {
 
 	struct phylink		*phylink;
 	struct phylink_config	phylink_config;
+
+	struct dma_chan		*dma_rx_chan;
+	dma_addr_t		dma_addr;
 
 	int phc_index;
 
@@ -135,5 +139,9 @@ void ra_net_tx_ts_init(struct ra_net_priv *priv);
 int ra_net_hwtstamp_ioctl(struct net_device *ndev,
 			  struct ifreq *ifr, int cmd);
 void ra_net_rx_read_timestamp(struct ra_net_priv *priv, struct sk_buff *skb);
+
+int ra_net_dma_probe(struct ra_net_priv *priv);
+void ra_net_dma_flush(struct ra_net_priv *priv);
+void ra_net_dma_rx(struct ra_net_priv *priv);
 
 #endif /* RAVENNA_NET_MAIN_H */

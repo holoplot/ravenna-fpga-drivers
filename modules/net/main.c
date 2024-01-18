@@ -42,7 +42,7 @@ static int ra_net_napi_poll(struct napi_struct *napi, int budget)
 			break;
 		}
 
-		ra_net_ior_rep(priv, RA_NET_RX_FIFO, skb->data, pkt_len_padded);
+		ra_net_ior_rep(priv, RA_NET_RX_FIFO, skb->data,	pkt_len_padded);
 
 		/* FPGA inserts 2 padding bytes */
 		skb_reserve(skb, RA_NET_RX_PADDING_BYTES);
@@ -105,7 +105,11 @@ static irqreturn_t ra_net_irqhandler(int irq, void *dev_id)
 
 	if (irqs & RA_NET_IRQ_RX_PACKET_AVAILABLE) {
 		ra_net_irq_disable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE);
-		napi_schedule(&priv->napi);
+
+		if (priv->dma_rx_chan)
+			ra_net_dma_rx(priv);
+		else
+			napi_schedule(&priv->napi);
 	}
 
 	if (irqs & RA_NET_IRQ_TX_SPACE_AVAILABLE) {
@@ -164,6 +168,8 @@ static void ra_net_reset(struct ra_net_priv *priv)
 
 	ra_net_flush_rx_fifo(priv);
 	ra_net_flush_tx_ts(priv);
+
+	ra_net_dma_flush(priv);
 }
 
 static void ra_net_write_mac_addr(struct net_device *ndev)
@@ -599,6 +605,12 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	ret = ra_net_dma_probe(priv);
+	if (ret < 0) {
+		dev_err(dev, "DMA init failed: %d\n", ret);
+		return ret;
+	}
+
 	tmp = 0;
 	of_property_read_u32(node, "lawo,ptp-delay-path-rx-1000mbit-nsec", &tmp);
 	val = tmp & 0xffff;
@@ -639,8 +651,9 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 
 	val = ra_net_ior(priv, RA_NET_RAV_CORE_VERSION);
 
-	dev_info(dev, "Ravenna ethernet driver, core version: %02x.%02x\n",
-		 (val >> 8) & 0xff, val & 0xff);
+	dev_info(dev, "Ravenna ethernet driver, core version: %02x.%02x, %s mode\n",
+		 (val >> 8) & 0xff, val & 0xff,
+		 priv->dma_rx_chan ? "DMA" : "FIFO");
 
 	return 0;
 }

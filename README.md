@@ -55,6 +55,17 @@ Some more non-standard configuration can be read and written through the sysfs i
 | `rtp_global_offset`                    | R/W       | `RA_NET_RTP_GLOBAL_OFFSET`                  |
 | `counter_reset`                        | W/O       | `RA_NET_PP_CNT_RST`                         |
 
+### DMA support
+
+The driver supports DMA for ingress traffic through the `dmaengine` API. The DMA channel
+has to be specified in the device tree with the name `rx`.
+
+The following requirements apply:
+
+* The `dmaengine` driver must support `memcpy` operations.
+* The hardware design must provide a memory block that is mapped to the FIFO of the
+  network interface. The memory block must be accessible by the DMA engine.
+
 ### DTS properties
 
 | Property name                           | Mandatory | Description                                 |
@@ -65,6 +76,9 @@ Some more non-standard configuration can be read and written through the sysfs i
 | `reg`                                   | *         | Register space                              |
 | `phy-handle`                            | *         | PHY handle to use                           |
 | `phy-mode`                              |           | PHY mode to set                             |
+| `dmas`                                  |           | phandles to the DMA channels                |
+| `dma-names`                             |           | DMA channel names, must be `"rx"`           |
+| `lawo,dma-fifo`                         |           | phandle to the DMA FIFO node                |
 | `lawo-ptp-clock`                        |           | phandle to the Ravenna PTP clock node       |
 | `lawo,ptp-delay-path-rx-1000mbit-nsec`  |           | RX path delay in 1000 Mbit/s mode, in nsecs |
 | `lawo,ptp-delay-path-rx-100mbit-nsec`   |           | RX path delay in 100 Mbit/s mode, in nsecs  |
@@ -74,6 +88,15 @@ Some more non-standard configuration can be read and written through the sysfs i
 ### Example DTS binding:
 
 ```
+    &rav_legacy {
+        compatible = "simple-bus";
+        ranges;
+
+        ra0_dma_fifo: dma-fifo@b0000000 {
+            reg = <0x0 0xb0000000 0x0 0x2000>;
+        };
+    };
+
     ra0: ravenna-net@a0180000 {
         compatible = "lawo,ravenna-ethernet";
         reg = <0x0 0xa0180000 0x0 0x1000>;
@@ -84,6 +107,11 @@ Some more non-standard configuration can be read and written through the sysfs i
 
         phy-handle = <&ra0_phy>;
         phy-mode = "rgmii";
+
+	// DMA setup for Xilinx ZynqMP DMA controllers
+        dmas = <&fpd_dma_chan1 0>;
+        dma-names = "rx";
+        lawo,dma-fifo = <&ra0_dma_fifo>;
 
         lawo,ptp-clock = <&ra_ptp0>;
 
