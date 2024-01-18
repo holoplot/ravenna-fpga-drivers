@@ -338,7 +338,7 @@ out:
 	return ret;
 }
 
-static int ra_net_start_xmit(struct sk_buff *skb, struct net_device *ndev)
+static netdev_tx_t ra_net_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
 	int ret;
