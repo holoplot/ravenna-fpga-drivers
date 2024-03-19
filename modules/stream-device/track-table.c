@@ -27,8 +27,11 @@ void ra_track_table_set(struct ra_track_table *trtb,
 {
 	int i;
 
-	ra_for_each_active_track(i, n_channels, tracks)
-		ra_track_table_write(trtb, index+i, tracks[i]);
+	for (i = 0; i < n_channels; i++) {
+		u32 v = tracks[i] >= 0 ? tracks[i] : RA_TRACK_TABLE_MUTE;
+
+		ra_track_table_write(trtb, index+i, v);
+	}
 }
 
 void ra_track_table_free(struct ra_track_table *trtb,
