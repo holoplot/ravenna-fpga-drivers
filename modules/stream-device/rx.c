@@ -198,28 +198,23 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 		goto out_unlock;
 	}
 
+	ra_sd_rx_tracks_mark_unused(rx, &e->stream);
+
+	ret = ra_sd_rx_tracks_available(rx, &cmd.stream);
+	if (ret < 0)
+		goto out_rollback;
+
 	if (e->stream.num_channels != cmd.stream.num_channels) {
 		/*
 		* If the number of channels changes, we need to free the current
 		* track table allocation and reserve a new range of tracks.
 		*/
-		ra_sd_rx_tracks_mark_unused(rx, &e->stream);
-		ret = ra_sd_rx_tracks_available(rx, &cmd.stream);
-		if (ret < 0) {
-			/* Roll back */
-			ra_sd_rx_tracks_mark_used(rx, &e->stream);
-			goto out_unlock;
-		}
-
 		ra_track_table_free(&rx->trtb, e->trtb_index, e->stream.num_channels);
 		ret = ra_track_table_alloc(&rx->trtb, cmd.stream.num_channels);
 		if (ret < 0) {
 			int aret = ret;
 
 			dev_err(rx->dev, "ra_track_table_alloc() failed: %d\n", ret);
-
-			/* Roll back */
-			ra_sd_rx_tracks_mark_used(rx, &e->stream);
 
 			ret = ra_track_table_alloc(&rx->trtb,
 						   e->stream.num_channels);
@@ -228,7 +223,7 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 			 * valid before.
 			 */
 			if (WARN_ON(ret < 0))
-				goto out_unlock;
+				goto out_rollback;
 
 			e->trtb_index = ret;
 			ra_track_table_set(&rx->trtb, e->trtb_index,
@@ -238,13 +233,11 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 					       cmd.index, e->trtb_index);
 
 			ret = aret;
-			goto out_unlock;
+			goto out_rollback;
 		}
 
 		e->trtb_index = ret;
 	}
-
-	ra_sd_rx_tracks_mark_unused(rx, &e->stream);
 
 	memcpy(&e->stream, &cmd.stream, sizeof(e->stream));
 
@@ -252,6 +245,10 @@ int ra_sd_rx_update_stream_ioctl(struct ra_sd_rx *rx, struct file *filp,
 	ra_track_table_set(&rx->trtb, e->trtb_index,
 			   e->stream.num_channels, e->stream.tracks);
 	ra_stream_table_rx_set(&rx->sttb, &e->stream, cmd.index, e->trtb_index);
+
+out_rollback:
+	if (ret < 0)
+		ra_sd_rx_tracks_mark_used(rx, &e->stream);
 
 out_unlock:
 	mutex_unlock(&rx->mutex);
