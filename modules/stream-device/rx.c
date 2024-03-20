@@ -68,13 +68,35 @@ static int ra_sd_rx_validate_stream(const struct ra_sd_rx *rx,
 static int ra_sd_rx_tracks_available(const struct ra_sd_rx *rx,
 				     const struct ra_sd_rx_stream *stream)
 {
-	int i;
+	struct ra_sd_priv *priv = container_of(rx, struct ra_sd_priv, rx);
+	unsigned long *used_tracks;
+	int i, ret = 0;
 
-	ra_for_each_active_track(i, stream->num_channels, stream->tracks)
+	/*
+	 * To check if a track is assigned more than once, we need to allocate
+	 * a temporary bitmap because we can't modify rx->used_tracks until
+	 * we're sure the stream is valid.
+	 */
+	used_tracks = bitmap_zalloc(priv->max_tracks, GFP_KERNEL);
+	if (!used_tracks)
+		return -ENOMEM;
+
+	ra_for_each_active_track(i, stream->num_channels, stream->tracks) {
+		/* Track already used by the current operation? */
+		if (test_and_set_bit(stream->tracks[i], used_tracks))
+			ret = -EINVAL;
+
+		/* Track already used by another active stream? */
 		if (test_bit(stream->tracks[i], rx->used_tracks))
-			return -EBUSY;
+			ret = -EBUSY;
 
-	return 0;
+		if (ret < 0)
+			break;
+	}
+
+	bitmap_free(used_tracks);
+
+	return ret;
 }
 
 static void ra_sd_rx_tracks_mark_used(struct ra_sd_rx *rx,
