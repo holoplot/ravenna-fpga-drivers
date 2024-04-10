@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/capability.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/of_irq.h>
@@ -58,6 +59,9 @@ static long ra_sd_ioctl(struct file *filp,
 	struct ra_sd_priv *priv = to_ra_sd_priv(filp->private_data);
 	void __user *buf = (void __user *)arg;
 	unsigned int size = _IOC_SIZE(cmd);
+
+	if (!capable(CAP_NET_BROADCAST))
+		return -EPERM;
 
 	switch (cmd) {
 	case RA_SD_READ_INFO:
@@ -179,6 +183,9 @@ static int ra_sd_probe(struct platform_device *pdev)
 	priv->misc.minor = MISC_DYNAMIC_MINOR;
 	priv->misc.fops = &ra_sd_fops;
 	priv->misc.name = name;
+	priv->misc.mode = S_IRUSR | S_IWUSR |
+			  S_IRGRP | S_IWGRP |
+			  S_IROTH | S_IWOTH;
 
 	ret = misc_register(&priv->misc);
 	if (ret < 0)
