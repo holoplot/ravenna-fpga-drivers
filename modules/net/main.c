@@ -298,6 +298,7 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	free = ra_net_ior(priv, RA_NET_TX_STATE) & RA_NET_TX_STATE_SPACE_AVAILABLE_MASK;
 	if (free < aligned_len) {
 		ret = -ENOSPC;
+		free_skb = false;
 		goto out_unlock;
 	}
 
