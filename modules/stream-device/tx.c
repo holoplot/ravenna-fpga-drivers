@@ -16,7 +16,7 @@ ra_sd_tx_stream_elem_find_by_index(struct ra_sd_tx *tx, int index)
 }
 
 static int
-ra_sd_rx_validate_stream_interface(const struct ra_sd_tx_stream_interface *iface,
+ra_sd_tx_validate_stream_interface(const struct ra_sd_tx_stream_interface *iface,
 				   bool vlan)
 {
 	if (iface->destination_ip == 0		||
@@ -42,14 +42,14 @@ static int ra_sd_tx_validate_stream(struct ra_sd_tx *tx,
 		return -EINVAL;
 
 	if (stream->use_primary) {
-		ret = ra_sd_rx_validate_stream_interface(&stream->primary,
+		ret = ra_sd_tx_validate_stream_interface(&stream->primary,
 							 stream->vlan_tagged);
 		if (ret < 0)
 			return ret;
 	}
 
 	if (stream->use_secondary) {
-		ret = ra_sd_rx_validate_stream_interface(&stream->secondary,
+		ret = ra_sd_tx_validate_stream_interface(&stream->secondary,
 							 stream->vlan_tagged);
 		if (ret < 0)
 			return ret;
