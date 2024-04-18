@@ -19,7 +19,6 @@ type RxStreamDescription struct {
 
 	Active            bool
 	SyncSource        bool
-	VlanTagged        bool
 	HitlessProtection bool
 	Synchronous       bool
 	RtpFilter         bool
@@ -27,7 +26,6 @@ type RxStreamDescription struct {
 	CodecType      Codec
 	RtpPayloadType uint8
 
-	VlanTag            uint16
 	JitterBufferMargin uint16
 
 	RtpOffset uint32
@@ -52,7 +50,7 @@ func (sd *RxStreamDescription) toIoctlStruct() []byte {
 	binary.Write(buf, binary.LittleEndian, [2]uint8{0}) // padding
 
 	binary.Write(buf, binary.LittleEndian, sd.SyncSource)
-	binary.Write(buf, binary.LittleEndian, sd.VlanTagged)
+	binary.Write(buf, binary.LittleEndian, 0) // reserved
 	binary.Write(buf, binary.LittleEndian, sd.HitlessProtection)
 	binary.Write(buf, binary.LittleEndian, sd.Synchronous)
 	binary.Write(buf, binary.LittleEndian, sd.RtpFilter)
@@ -62,7 +60,7 @@ func (sd *RxStreamDescription) toIoctlStruct() []byte {
 
 	binary.Write(buf, binary.LittleEndian, sd.Active)
 
-	binary.Write(buf, binary.LittleEndian, sd.VlanTag)
+	binary.Write(buf, binary.LittleEndian, 0) // reserved
 	binary.Write(buf, binary.LittleEndian, sd.JitterBufferMargin)
 
 	binary.Write(buf, binary.LittleEndian, sd.RtpOffset)

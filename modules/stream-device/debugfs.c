@@ -272,10 +272,6 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 				   &st->secondary.destination_ip,
 				   be16_to_cpu(st->secondary.destination_port));
 
-		if (st->vlan_tagged)
-			seq_printf(s, "  VLAN tag: %u\n",
-				   be16_to_cpu(st->vlan_tag));
-
 		seq_printf(s, "  Channels: %u\n", st->num_channels);
 		seq_printf(s, "  Codec: %s\n", ra_sd_codec_str(st->codec));
 		seq_printf(s, "  RTP payload type: %u\n", st->rtp_payload_type);
@@ -285,7 +281,6 @@ static int ra_sd_rx_streams_show(struct seq_file *s, void *p)
 
 		seq_printf(s, "  Mode: %s%s%s%s%s\n",
 			   st->sync_source		? "SYNC-SOURCE " : "",
-			   st->vlan_tagged		? "VLAN-TAGGED " : "",
 			   st->hitless_protection	? "HITLESS " 	 : "",
 			   st->rtp_filter		? "RTP-FILTER "  : "",
 			   st->synchronous		? "SYNCHRONOUS " :

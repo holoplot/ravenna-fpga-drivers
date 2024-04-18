@@ -11,12 +11,11 @@
 #define RA_STREAM_TABLE_RX_MISC_VLD		BIT(7)
 #define RA_STREAM_TABLE_RX_MISC_ACT		BIT(6)
 #define RA_STREAM_TABLE_RX_MISC_SYNC_SOURCE	BIT(5)
-#define RA_STREAM_TABLE_RX_MISC_VLAN		BIT(4)
 #define RA_STREAM_TABLE_RX_MISC_EXEC_HASH	BIT(2)
 #define RA_STREAM_TABLE_RX_MISC_HITLESS		BIT(1)
 #define RA_STREAM_TABLE_RX_MISC_SYNCHRONOUS	BIT(0)
 
-/* rtp_filter_vlan_id */
+/* rtp_filter */
 #define RA_STREAM_TABLE_RX_RTP_FILTER		BIT(15)
 
 struct ra_stream_table_rx_fpga {
@@ -41,7 +40,7 @@ struct ra_stream_table_rx_fpga {
 
 	__u8 rtp_payload_type;			/* 0x1c */
 	__u8 rtcp_control;			/* 0x1d */
-	__u16 rtp_filter_vlan_id;		/* 0x1e */
+	__u16 rtp_filter;			/* 0x1e */
 #else /* __BIG_ENDIAN */
 #error Big Endian platforms are unsupported
 #endif
@@ -107,10 +106,9 @@ static void ra_stream_table_rx_fill(const struct ra_sd_rx_stream *stream,
 	fpga->jitter_buffer_margin = stream->jitter_buffer_margin;
 	fpga->rtp_ssrc = stream->rtp_ssrc;
 	fpga->rtp_payload_type = stream->rtp_payload_type;
-	fpga->rtp_filter_vlan_id = be16_to_cpu(stream->vlan_tag) & 0xfff;
 
 	if (stream->rtp_filter)
-		fpga->rtp_filter_vlan_id |= RA_STREAM_TABLE_RX_RTP_FILTER;
+		fpga->rtp_filter |= RA_STREAM_TABLE_RX_RTP_FILTER;
 
 	fpga->codec = ra_sd_codec_fpga_code(stream->codec);
 
@@ -119,9 +117,6 @@ static void ra_stream_table_rx_fill(const struct ra_sd_rx_stream *stream,
 
 	if (stream->sync_source)
 		fpga->misc_control |= RA_STREAM_TABLE_RX_MISC_SYNC_SOURCE;
-
-	if (stream->vlan_tagged)
-		fpga->misc_control |= RA_STREAM_TABLE_RX_MISC_VLAN;
 
 	if (stream->hitless_protection)
 		fpga->misc_control |= RA_STREAM_TABLE_RX_MISC_HITLESS;

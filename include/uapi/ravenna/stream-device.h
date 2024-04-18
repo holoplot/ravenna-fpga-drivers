@@ -87,7 +87,7 @@ struct ra_sd_rx_stream {
 	} primary, secondary;
 
 	__bool sync_source;
-	__bool vlan_tagged;
+	__bool reserved_1;
 	__bool hitless_protection;
 	__bool synchronous;
 	__bool rtp_filter;
@@ -98,7 +98,7 @@ struct ra_sd_rx_stream {
 
 	__bool active;
 
-	__be16 vlan_tag;
+	__be16 reserved_2;
 	__u16 jitter_buffer_margin;
 
 	__u32 rtp_offset;

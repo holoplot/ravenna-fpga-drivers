@@ -43,9 +43,6 @@ static int ra_sd_rx_validate_stream(const struct ra_sd_rx *rx,
 	if (ret < 0)
 		return ret;
 
-	if (stream->vlan_tagged && be16_to_cpu(stream->vlan_tag) > 4095)
-		return -EINVAL;
-
 	if (stream->codec >= _RA_STREAM_CODEC_MAX)
 		return -EINVAL;
 
