@@ -78,7 +78,7 @@ struct ra_net_dma_rx_ctx {
 	struct sk_buff *skb;
 	dma_addr_t dma_addr;
 	bool timestamped;
-	size_t len;
+	size_t len, buf_len;
 };
 
 static int ra_net_dma_rx_one(struct ra_net_priv *priv);
@@ -92,12 +92,19 @@ static void ra_net_dma_rx_callback(void *arg)
 	dma_dev = dmaengine_get_dma_device(priv->dma_rx_chan);
 
 	dma_unmap_single(dma_dev, ctx->dma_addr,
-			 ctx->len + RA_NET_RX_PADDING_BYTES,
-			 DMA_FROM_DEVICE);
+			 ctx->buf_len, DMA_FROM_DEVICE);
 
 	/* FPGA inserts 2 padding bytes */
 	skb_reserve(ctx->skb, RA_NET_RX_PADDING_BYTES);
 	skb_put(ctx->skb, ctx->len);
+
+	if (ctx->timestamped) {
+		struct ptp_packet_fpga_timestamp *ts =
+			(struct ptp_packet_fpga_timestamp *)
+				(ctx->skb->data + ctx->len);
+
+		ra_net_rx_apply_timestamp(priv, ctx->skb, ts);
+	}
 
 	ctx->skb->protocol = eth_type_trans(ctx->skb, priv->ndev);
 
@@ -108,9 +115,6 @@ static void ra_net_dma_rx_callback(void *arg)
 	priv->ndev->stats.rx_packets++;
 	priv->ndev->stats.rx_bytes += ctx->len;
 	spin_unlock(&priv->lock);
-
-	if (ctx->timestamped)
-		ra_net_rx_read_timestamp(priv, ctx->skb);
 
 	netif_rx(ctx->skb);
 
@@ -124,32 +128,38 @@ static void ra_net_dma_rx_callback(void *arg)
 
 static int ra_net_dma_rx_one(struct ra_net_priv *priv)
 {
-	u32 status, pkt_len, pkt_len_padded;
+	u32 status, pkt_len, buf_len;
 	struct dma_async_tx_descriptor *tx;
 	struct ra_net_dma_rx_ctx *ctx;
 	struct device *dma_dev;
 	struct sk_buff *skb;
 	dma_cookie_t cookie;
 	dma_addr_t dma_addr;
+	bool timestamped;
 	int ret;
 
 	status = ra_net_ior(priv, RA_NET_RX_STATE);
 	pkt_len = status & RA_NET_RX_STATE_PACKET_LEN_MASK;
-	pkt_len_padded = pkt_len + RA_NET_RX_PADDING_BYTES;
+	timestamped = !!(status & RA_NET_RX_STATE_PACKET_HAS_PTP_TS);
 
 	if (pkt_len == 0)
 		return -ENOENT;
 
+	buf_len = pkt_len + RA_NET_RX_PADDING_BYTES;
+
+	if (timestamped)
+		buf_len += sizeof(struct ptp_packet_fpga_timestamp);
+
 	dma_dev = dmaengine_get_dma_device(priv->dma_rx_chan);
 
-	skb = netdev_alloc_skb(priv->ndev, pkt_len_padded+4);
+	skb = netdev_alloc_skb(priv->ndev, buf_len+4);
 	if (unlikely(!skb)) {
 		priv->ndev->stats.rx_fifo_errors++;
 		return -ENOMEM;
 	}
 
 	dma_addr = dma_map_single(dma_dev, skb->data,
-				  pkt_len_padded, DMA_FROM_DEVICE);
+				  buf_len, DMA_FROM_DEVICE);
 	if (dma_mapping_error(dma_dev, dma_addr)) {
 		dev_err(priv->dev, "Failed to DMA map buffer\n");
 		ret = -EIO;
@@ -165,11 +175,12 @@ static int ra_net_dma_rx_one(struct ra_net_priv *priv)
 	ctx->priv = priv;
 	ctx->skb = skb;
 	ctx->len = pkt_len;
+	ctx->buf_len = buf_len;
 	ctx->dma_addr = dma_addr;
-	ctx->timestamped = !!(status & RA_NET_RX_STATE_PACKET_HAS_PTP_TS);
+	ctx->timestamped = timestamped;
 
 	tx = dmaengine_prep_dma_memcpy(priv->dma_rx_chan, dma_addr,
-				       priv->dma_addr, pkt_len_padded,
+				       priv->dma_addr, buf_len,
 				       DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
 	if (!tx) {
 		dev_err(priv->dev, "dmaengine_prep_dma_memcpy failed\n");
@@ -195,7 +206,7 @@ static int ra_net_dma_rx_one(struct ra_net_priv *priv)
 err_free_ctx:
 	kfree(ctx);
 err_unmap:
-	dma_unmap_single(dma_dev, dma_addr, pkt_len_padded, DMA_FROM_DEVICE);
+	dma_unmap_single(dma_dev, dma_addr, buf_len, DMA_FROM_DEVICE);
 err_free_skb:
 	kfree_skb(skb);
 

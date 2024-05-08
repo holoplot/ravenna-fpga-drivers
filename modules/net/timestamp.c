@@ -258,28 +258,35 @@ bool ra_net_tx_ts_queue(struct ra_net_priv *priv, struct sk_buff *skb)
 	return true;
 }
 
-void ra_net_rx_read_timestamp(struct ra_net_priv *priv, struct sk_buff *skb)
+void ra_net_rx_apply_timestamp(struct ra_net_priv *priv,
+			       struct sk_buff *skb,
+			       struct ptp_packet_fpga_timestamp *ts)
 {
 	struct skb_shared_hwtstamps *ts_ptr = skb_hwtstamps(skb);
-	struct ptp_packet_fpga_timestamp ts;
 	u64 ns;
-
-	BUILD_BUG_ON(!IS_ALIGNED(sizeof(ts), sizeof(u32)));
 
 	if (!priv->rx_ts_enable)
 		return;
 
-	ra_net_ior_rep(priv, RA_NET_RX_FIFO, &ts, sizeof(ts));
-
-	if (ts.start_of_ts != RA_NET_TX_TIMESTAMP_START_OF_TS) {
-		dev_dbg(priv->dev, "Rx timestamp has no SOT\n");
+	if (ts->start_of_ts != RA_NET_TX_TIMESTAMP_START_OF_TS) {
+		dev_err(priv->dev, "RX timestamp has no SOT\n");
 		return;
 	}
 
 	dev_dbg(priv->dev, "Valid rx timestamp found\n");
 
-	ns = (s64)ts.seconds * NSEC_PER_SEC + ts.nanoseconds;
+	ns = (s64)ts->seconds * NSEC_PER_SEC + ts->nanoseconds;
 	ts_ptr->hwtstamp = ns_to_ktime(ns);
+}
+
+void ra_net_rx_read_timestamp(struct ra_net_priv *priv, struct sk_buff *skb)
+{
+	struct ptp_packet_fpga_timestamp ts;
+
+	BUILD_BUG_ON(!IS_ALIGNED(sizeof(ts), sizeof(u32)));
+
+	ra_net_ior_rep(priv, RA_NET_RX_FIFO, &ts, sizeof(ts));
+	ra_net_rx_apply_timestamp(priv, skb, &ts);
 }
 
 static void ra_net_tx_ts_config(struct ra_net_priv *priv)
