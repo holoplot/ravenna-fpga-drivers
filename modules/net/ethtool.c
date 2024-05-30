@@ -14,28 +14,52 @@
 
 static const char ra_net_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"udp_throttled_packets",
+	"fifo_err_cnt",
+
 	"rx_packets_parsed",
 	"rx_queue_errors",
 	"rx_checksum_errors",
 	"rx_stream_packets_dropped",
 	"rx_stream_packets",
 	"rx_legacy_packets",
+	"rx_unicast_packets",
+	"rx_broadcast_packets",
+	"rx_dropped_frames",
+	"rx_fcs_errors",
+
 	"tx_stream_packets",
 	"tx_legacy_packets",
 	"tx_stream_packets_lost",
+	"tx_unicast_packets",
+	"tx_multicast_packets",
+	"tx_broadcast_packets",
+	"tx_pad_packets",
+	"tx_oversize_packets",
 };
 
 struct ra_net_stats {
 	u64 udp_throttled_packets;
+	u64 fifo_err_cnt;
+
 	u64 rx_packets_parsed;
 	u64 rx_queue_errors;
 	u64 rx_checksum_errors;
 	u64 rx_stream_packets_dropped;
 	u64 rx_stream_packets;
 	u64 rx_legacy_packets;
+	u64 rx_unicast_packets;
+	u64 rx_broadcast_packets;
+	u64 rx_dropped_frames;
+	u64 rx_fcs_errors;
+
 	u64 tx_stream_packets;
 	u64 tx_legacy_packets;
 	u64 tx_stream_packets_lost;
+	u64 tx_unicast_packets;
+	u64 tx_multicast_packets;
+	u64 tx_broadcast_packets;
+	u64 tx_pad_packets;
+	u64 tx_oversize_packets;
 };
 
 static void ra_net_read_stats(struct ra_net_priv *priv,
@@ -45,6 +69,9 @@ static void ra_net_read_stats(struct ra_net_priv *priv,
 
 	stats->udp_throttled_packets =
 		ra_net_ior(priv, RA_NET_PP_CNT_UDP_THROTTLE);
+	stats->fifo_err_cnt =
+		ra_net_ior(priv, RA_NET_FIFO_ERR_CNT);
+
 	stats->rx_packets_parsed =
 		ra_net_ior(priv, RA_NET_PP_CNT_RX_PARSED);
 	stats->rx_queue_errors =
@@ -57,12 +84,31 @@ static void ra_net_read_stats(struct ra_net_priv *priv,
 		ra_net_ior(priv, RA_NET_PP_CNT_RX_STREAM);
 	stats->rx_legacy_packets =
 		ra_net_ior(priv, RA_NET_PP_CNT_RX_LEGACY);
+	stats->rx_unicast_packets =
+		ra_net_ior(priv, RA_NET_RX_UNICAST_PKT_CNT);
+	stats->rx_broadcast_packets =
+		ra_net_ior(priv, RA_NET_RX_BROADCAST_PKT_CNT);
+	stats->rx_dropped_frames =
+		ra_net_ior(priv, RA_NET_RX_DROPPED_FRAMES_CNT);
+	stats->rx_fcs_errors =
+		ra_net_ior(priv, RA_NET_RX_FCS_ERR_CNT);
+
 	stats->tx_stream_packets =
 		ra_net_ior(priv, RA_NET_PP_CNT_TX_STREAM);
 	stats->tx_legacy_packets =
 		ra_net_ior(priv, RA_NET_PP_CNT_TX_LEGACY);
 	stats->tx_stream_packets_lost =
 		ra_net_ior(priv, RA_NET_PP_CNT_TX_STREAM_LOST);
+	stats->tx_unicast_packets =
+		ra_net_ior(priv, RA_NET_TX_UNICAST_PKT_CNT);
+	stats->tx_multicast_packets =
+		ra_net_ior(priv, RA_NET_TX_MULTICAST_PKT_CNT);
+	stats->tx_broadcast_packets =
+		ra_net_ior(priv, RA_NET_TX_BROADCAST_PKT_CNT);
+	stats->tx_pad_packets =
+		ra_net_ior(priv, RA_NET_TX_PAD_PKT_CNT);
+	stats->tx_oversize_packets =
+		ra_net_ior(priv, RA_NET_TX_OVERSIZE_PKT_CNT);
 }
 
 static void ra_net_get_strings(struct net_device *netdev, u32 stringset, u8 *buf)
