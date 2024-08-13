@@ -158,6 +158,8 @@ static void ra_net_tx_ts_work(struct work_struct *work)
 
 		if (skb_consumed) {
 			dev_kfree_skb_any(skb);
+			priv->tx_ts.skb_ptr[priv->tx_ts.skb_rd_idx] = NULL;
+
 			priv->tx_ts.skb_rd_idx++;
 			priv->tx_ts.skb_rd_idx %= RA_NET_TX_SKB_LIST_SIZE;
 		}
@@ -179,7 +181,7 @@ static void ra_net_tx_ts_work(struct work_struct *work)
 void ra_net_flush_tx_ts(struct ra_net_priv *priv)
 {
 	unsigned long flags;
-	int rd_idx;
+	int i;
 
 	cancel_work_sync(&priv->tx_ts.work);
 
@@ -198,11 +200,9 @@ void ra_net_flush_tx_ts(struct ra_net_priv *priv)
 	}
 
 	/* Tx skb list */
-	while (priv->tx_ts.skb_rd_idx != priv->tx_ts.skb_wr_idx) {
-		dev_kfree_skb(priv->tx_ts.skb_ptr[rd_idx]);
-
-		priv->tx_ts.skb_rd_idx++;
-		priv->tx_ts.skb_rd_idx %= RA_NET_TX_SKB_LIST_SIZE;
+	for (i = 0; i < RA_NET_TX_SKB_LIST_SIZE; i++) {
+		dev_kfree_skb_any(priv->tx_ts.skb_ptr[i]);
+		priv->tx_ts.skb_ptr[i] = NULL;
 	}
 
 	priv->tx_ts.skb_rd_idx = 0;
@@ -228,21 +228,14 @@ bool ra_net_tx_ts_queue(struct ra_net_priv *priv, struct sk_buff *skb)
 
 	if ((priv->tx_ts.skb_wr_idx+1) % RA_NET_TX_SKB_LIST_SIZE ==
 		priv->tx_ts.skb_rd_idx) {
-		struct sk_buff *old_skb;
+		dev_kfree_skb_any(priv->tx_ts.skb_ptr[priv->tx_ts.skb_rd_idx]);
+		priv->tx_ts.skb_ptr[priv->tx_ts.skb_rd_idx] = NULL;
 
-		/* no space left in ringbuffer!
-		 * => discard oldest entry
-		 */
+		net_err_ratelimited("%s: skb ringbuffer for timestamping full\n",
+				    priv->ndev->name);
 
-		old_skb = priv->tx_ts.skb_ptr[priv->tx_ts.skb_rd_idx];
 		priv->tx_ts.skb_rd_idx++;
 		priv->tx_ts.skb_rd_idx %= RA_NET_TX_SKB_LIST_SIZE;
-
-		dev_kfree_skb_any(old_skb);
-
-		net_err_ratelimited("%s: skb ringbuffer for timestamping full "
-					"=> discarding oldest entry\n",
-					priv->ndev->name);
 	}
 
 	dev_dbg(priv->dev, "Requesting timestamp for tx packet\n");
