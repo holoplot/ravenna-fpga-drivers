@@ -9,8 +9,8 @@
 
 #include "regs.h"
 
-#define RA_NET_TX_SKB_LIST_SIZE	20
-#define RA_NET_TX_TS_LIST_SIZE	20
+#define RA_NET_TX_SKB_LIST_SIZE	64
+#define RA_NET_TX_TS_LIST_SIZE	64
 
 /* raw timestamp data read from FPGA */
 struct ptp_packet_fpga_timestamp
