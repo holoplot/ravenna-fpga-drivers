@@ -119,8 +119,8 @@ static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 
 	if (ts->sequence_id < packet_seq_id) {
 		/* timestamp without packet ! => remove from list */
-		dev_dbg(dev, "timestamp sequence id (0x%04X) < packet sequence id (0x%04X) => discard timestamp\n",
-			ts->sequence_id, packet_seq_id);
+		net_err_ratelimited("%s: timestamp sequence id (0x%04X) < packet sequence id (0x%04X), discarding timestamp\n",
+			priv->ndev->name, ts->sequence_id, packet_seq_id);
 
 		*ts_consumed = true;
 		*skb_consumed = false;
@@ -128,10 +128,8 @@ static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 		return;
 	}
 
-	/* if (ts->sequence_id > packet_seq_id) */
-	/* corresponding timestamp seems to be lost ! => "remove" packet from list */
-	dev_dbg(dev, "timestamp sequence id (0x%04X) > packet sequence id (0x%04X) => discard packet\n",
-		ts->sequence_id, packet_seq_id);
+	net_err_ratelimited("%s: timestamp sequence id (0x%04X) > packet sequence id (0x%04X), discarding packet\n",
+		priv->ndev->name, ts->sequence_id, packet_seq_id);
 }
 
 static void ra_net_tx_ts_work(struct work_struct *work)
@@ -156,6 +154,9 @@ static void ra_net_tx_ts_work(struct work_struct *work)
 		ra_net_stamp_tx_skb(priv, skb, ts,
 				    &ts_consumed, &skb_consumed);
 
+		if (WARN_ON(!skb_consumed && !ts_consumed))
+			break;
+
 		if (skb_consumed) {
 			dev_kfree_skb_any(skb);
 			priv->tx_ts.skb_ptr[priv->tx_ts.skb_rd_idx] = NULL;
@@ -170,12 +171,12 @@ static void ra_net_tx_ts_work(struct work_struct *work)
 		}
 	}
 
-	spin_unlock_irqrestore(&priv->tx_ts.lock, flags);
-
 	if (priv->tx_ts.reenable_irq) {
 		priv->tx_ts.reenable_irq = false;
 		ra_net_pp_irq_enable(priv, RA_NET_PP_IRQ_PTP_TX_TS_IRQ_AVAILABLE);
 	}
+
+	spin_unlock_irqrestore(&priv->tx_ts.lock, flags);
 }
 
 void ra_net_flush_tx_ts(struct ra_net_priv *priv)
