@@ -104,6 +104,33 @@ func (d *Device) ResetCounter() error {
 	return d.writeStringAttribute("counter_reset", "")
 }
 
+func (d *Device) GetStreamPacketCounter() (uint64, uint64, error) {
+	s, err := d.readStringAttribute("stream_packet_counter")
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var timestamp, counter uint64
+
+	a := strings.Split(s, " ")
+
+	if len(a) != 2 {
+		return 0, 0, fmt.Errorf("invalid stream_packet_counter format")
+	}
+
+	timestamp, err = strconv.ParseUint(a[0], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("timestamp conversion failed: %w", err)
+	}
+
+	counter, err = strconv.ParseUint(a[1], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("counter conversion failed: %w", err)
+	}
+
+	return timestamp, counter, nil
+}
+
 func (d *Device) GetPTPClockIndex() (int, error) {
 	e, err := ethtool.NewEthtool()
 	if err != nil {
