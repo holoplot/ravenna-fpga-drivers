@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <linux/device.h>
+#include <linux/ktime.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 
@@ -107,12 +108,25 @@ static ssize_t udp_filter_port_store(struct device *dev,
 }
 static DEVICE_ATTR_RW(udp_filter_port);
 
+static ssize_t stream_packet_counter_show(struct device *dev,
+					  struct device_attribute *attr,
+					  char *buf)
+{
+	struct ra_net_priv *priv = netdev_priv(to_net_dev(dev));
+	u32 v = ra_net_ior(priv, RA_NET_PP_CNT_RX_STREAM);
+	u64 now_ns = ktime_get_ns();
+
+	return sysfs_emit(buf, "%llu %u\n", now_ns, v);
+}
+static DEVICE_ATTR_RO(stream_packet_counter);
+
 static struct attribute *ra_net_attrs[] = {
 	&dev_attr_rav_core_version.attr,
 	&dev_attr_rtp_global_offset.attr,
 	&dev_attr_counter_reset.attr,
 	&dev_attr_udp_filter_port.attr,
-        NULL
+	&dev_attr_stream_packet_counter.attr,
+	NULL
 };
 
 const struct attribute_group ra_net_attr_group = {
