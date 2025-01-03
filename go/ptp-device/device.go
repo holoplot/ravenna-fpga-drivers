@@ -48,10 +48,10 @@ func (d *Device) GetTimestampPair() (uint64, uint32, error) {
 		return 0, 0, fmt.Errorf("conversion failed: %w", err)
 	}
 
-	rtpTimestamp, err := strconv.ParseUint(a[1], 10, 32)
+	localMediaTime, err := strconv.ParseUint(a[1], 10, 32)
 	if err != nil {
 		return 0, 0, fmt.Errorf("conversion failed: %w", err)
 	}
 
-	return ptpTimestamp, uint32(rtpTimestamp), nil
+	return ptpTimestamp, uint32(localMediaTime), nil
 }
