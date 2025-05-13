@@ -22,7 +22,7 @@ type RtpSyncer struct {
 }
 
 const (
-	subSamplesPerSample          = 8
+	subSamplesPerSample          = subSamples(8)
 	subSamplesDeviationThreshold = 2
 )
 
@@ -34,9 +34,9 @@ type subSamples uint64
 // If the remainder is greater than or equal to half of the number of subSamplesPerSample,
 // the result is rounded up.
 func (s subSamples) toSamples32() uint32 {
-	i := uint64(s) / subSamplesPerSample
+	i := subSamples(s) / subSamplesPerSample
 
-	if uint64(s)%subSamplesPerSample >= subSamplesPerSample/2 {
+	if subSamples(s)%subSamplesPerSample >= subSamplesPerSample/2 {
 		i++
 	}
 
@@ -60,17 +60,17 @@ func (s subSamples) diffAbs(other subSamples) int64 {
 
 // subtractSamples subtracts a number of samples from a subSamples value.
 func (s subSamples) subtractSamples(i uint32) subSamples {
-	return s - subSamples(i*subSamplesPerSample)
+	return s - subSamples(i)*subSamplesPerSample
 }
 
 // ptpTimestampToRtpTimestamp converts a PTP timestamp to an rtpTimestamp.
-// The PTP timestamp is given in nanoseconds, and the result is represented in samples and quarter samples.
+// The PTP timestamp is given in nanoseconds, and the result is represented in subsamples.
 func (s *RtpSyncer) ptpTimestampToSubSamples(ptpTimestamp uint64) subSamples {
 	// subSamples = subSamplesPerSample * ptpTimestamp * sampleRate / nanoSecondsPerSecond
 
 	r := big.NewInt(0)
 	r.Mul(big.NewInt(int64(ptpTimestamp)), s.sampleRate)
-	r.Mul(r, big.NewInt(subSamplesPerSample))
+	r.Mul(r, big.NewInt(int64(subSamplesPerSample)))
 	r.Div(r, nanoSecondsPerSecond)
 
 	return subSamples(r.Uint64())
