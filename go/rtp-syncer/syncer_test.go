@@ -113,3 +113,44 @@ func TestRtpSyncer_ptpTimestampTosubSamples(t *testing.T) {
 		})
 	}
 }
+
+func Test_subSamples_subtractSamples(t *testing.T) {
+	tests := []struct {
+		name string
+		s    subSamples
+		i    uint32
+		want subSamples
+	}{
+		{
+			name: "null",
+			s:    0,
+			i:    0,
+			want: 0,
+		},
+		{
+			name: "test1",
+			s:    4003,
+			i:    0,
+			want: 4003,
+		},
+		{
+			name: "test2",
+			s:    4003,
+			i:    1,
+			want: 4003 - subSamplesPerSample,
+		},
+		{
+			name: "overflow",
+			s:    100000000000,
+			i:    1073761061,
+			want: 91409911512,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.subtractSamples(tt.i); got != tt.want {
+				t.Errorf("subSamples.subtractSamples() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
