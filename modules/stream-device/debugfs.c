@@ -150,7 +150,8 @@ static int ra_sd_tx_streams_show(struct seq_file *s, void *p)
 	xa_for_each(&priv->tx.streams, index, e) {
 		struct ra_sd_tx_stream *st = &e->stream;
 
-		seq_printf(s, "Stream #%lu\n", index);
+		seq_printf(s, "Stream #%lu (%s)\n", index,
+			   st->active ? "ACTIVE" : "INACTIVE");
 
 		seq_printf(s, "  Created by: PID %u\n", pid_vnr(e->pid));
 
