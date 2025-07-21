@@ -115,8 +115,9 @@ static irqreturn_t ra_net_irqhandler(int irq, void *dev_id)
 	if (irqs & RA_NET_IRQ_TX_SPACE_AVAILABLE) {
 		ra_net_irq_disable(priv, RA_NET_IRQ_TX_SPACE_AVAILABLE);
 
-		if (netif_queue_stopped(ndev))
-			netif_wake_queue(ndev);
+		priv->tx_throttle = false;
+
+		netif_wake_queue(ndev);
 	}
 
 	if (irqs & RA_NET_IRQ_TX_EMPTY) {
@@ -170,6 +171,8 @@ static void ra_net_reset(struct ra_net_priv *priv)
 	ra_net_flush_tx_ts(priv);
 
 	ra_net_dma_flush(priv);
+
+	priv->tx_throttle = false;
 }
 
 static void ra_net_write_mac_addr(struct net_device *ndev)
@@ -296,6 +299,21 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	spin_lock(&priv->lock);
 
 	free = ra_net_ior(priv, RA_NET_TX_STATE) & RA_NET_TX_STATE_SPACE_AVAILABLE_MASK;
+
+	if (free < RA_NET_TX_FIFO_MIN_SPACE_AVAILABLE) {
+		dev_dbg(dev, "TX FIFO space is running low: %d\n", free);
+
+		priv->tx_throttle = true;
+		netif_stop_queue(ndev);
+
+		/* Make sure the queue is stopped before the IRQ is enabled. */
+		wmb();
+
+		ra_net_iow(priv, RA_NET_TX_FIFO_SPACE_AV_BYTECNT,
+			   RA_NET_TX_FIFO_MIN_SPACE_AVAILABLE);
+		ra_net_irq_enable(priv, RA_NET_IRQ_TX_SPACE_AVAILABLE);
+	}
+
 	if (free < aligned_len) {
 		ret = -ENOSPC;
 		free_skb = false;
@@ -339,7 +357,7 @@ out:
 	if (free_skb)
 		dev_kfree_skb_any(skb);
 
-	if (ret == 0 && netif_queue_stopped(ndev))
+	if (!priv->tx_throttle)
 		netif_wake_queue(ndev);
 
 	return ret;
@@ -355,12 +373,6 @@ static netdev_tx_t ra_net_start_xmit(struct sk_buff *skb, struct net_device *nde
 	ret = ra_net_hw_xmit_skb(skb, ndev);
 	if (unlikely(ret == -ENOSPC)) {
 		net_warn_ratelimited("%s: No space in TX FIFO.", ndev->name);
-
-		netif_stop_queue(ndev);
-
-		ra_net_iow(priv, RA_NET_TX_FIFO_SPACE_AV_BYTECNT,
-			   RA_NET_TX_FIFO_MIN_SPACE_AVAILABLE);
-		ra_net_irq_enable(priv, RA_NET_IRQ_TX_SPACE_AVAILABLE);
 
 		return NETDEV_TX_BUSY;
 	}
