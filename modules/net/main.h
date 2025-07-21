@@ -61,6 +61,8 @@ struct ra_net_priv {
 	struct dma_chan		*dma_rx_chan;
 	dma_addr_t		dma_addr;
 
+	bool tx_throttle;
+
 	int phc_index;
 
 	struct ra_net_tx_ts tx_ts;
