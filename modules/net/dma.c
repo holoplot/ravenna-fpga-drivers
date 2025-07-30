@@ -217,6 +217,6 @@ void ra_net_dma_rx(struct ra_net_priv *priv) {
 	int ret;
 
 	ret = ra_net_dma_rx_one(priv);
-	if (ret == -ENOENT)
+	if (ret < 0)
 		ra_net_irq_enable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE);
 }
