@@ -274,11 +274,11 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	 */
 	if ((skb_headroom(skb) < RA_NET_TX_PADDING_BYTES) ||
 	    (short_packet && (skb_tailroom(skb) < (ETH_ZLEN - skb->len)))) {
-		net_info_ratelimited("%s: skb->data needs copy, because skb_headroom (%i < %i) "
-				     "or skb_tailroom (%i < %i) is too small\n",
-				     ndev->name,
-				     skb_headroom(skb), RA_NET_TX_PADDING_BYTES,
-				     skb_tailroom(skb), (ETH_ZLEN - skb->len));
+		net_dbg_ratelimited("%s: skb->data needs copy, because skb_headroom (%i < %i) "
+				    "or skb_tailroom (%i < %i) is too small\n",
+				    ndev->name,
+				    skb_headroom(skb), RA_NET_TX_PADDING_BYTES,
+				    skb_tailroom(skb), (ETH_ZLEN - skb->len));
 
 		tmp_buf = kzalloc(aligned_len, GFP_ATOMIC);
 		if (!tmp_buf) {
@@ -372,7 +372,7 @@ static netdev_tx_t ra_net_start_xmit(struct sk_buff *skb, struct net_device *nde
 
 	ret = ra_net_hw_xmit_skb(skb, ndev);
 	if (unlikely(ret == -ENOSPC)) {
-		net_warn_ratelimited("%s: No space in TX FIFO.", ndev->name);
+		net_dbg_ratelimited("%s: No space in TX FIFO.", ndev->name);
 
 		return NETDEV_TX_BUSY;
 	}
