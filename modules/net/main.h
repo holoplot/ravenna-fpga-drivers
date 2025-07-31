@@ -96,36 +96,41 @@ static inline void ra_net_ior_rep(struct ra_net_priv *priv, off_t offset,
 static inline void ra_net_iow_mask(struct ra_net_priv *priv, off_t offset,
 				   u32 mask, u32 val)
 {
-	u32 r;
+	u32 r = ra_net_ior(priv, offset);
 
-	// spin_lock(&priv->reg_lock);
-
-	r = ra_net_ior(priv, offset);
 	r &= ~mask;
 	r |= val;
 	ra_net_iow(priv, offset, r);
+}
 
-	// spin_unlock(&priv->reg_lock);
+static inline void ra_net_iow_mask_locked(struct ra_net_priv *priv,
+					  off_t offset, u32 mask, u32 val)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave(&priv->reg_lock, flags);
+	ra_net_iow_mask(priv, offset, mask, val);
+	spin_unlock_irqrestore(&priv->reg_lock, flags);
 }
 
 static inline void ra_net_irq_enable(struct ra_net_priv *priv, u32 bit)
 {
-	ra_net_iow_mask(priv, RA_NET_IRQ_DISABLE, bit, 0);
+	ra_net_iow_mask_locked(priv, RA_NET_IRQ_DISABLE, bit, 0);
 }
 
 static inline void ra_net_irq_disable(struct ra_net_priv *priv, u32 bit)
 {
-	ra_net_iow_mask(priv, RA_NET_IRQ_DISABLE, bit, bit);
+	ra_net_iow_mask_locked(priv, RA_NET_IRQ_DISABLE, bit, bit);
 }
 
 static inline void ra_net_pp_irq_enable(struct ra_net_priv *priv, u32 bit)
 {
-	ra_net_iow_mask(priv, RA_NET_PP_IRQ_DISABLE, bit, 0);
+	ra_net_iow_mask_locked(priv, RA_NET_PP_IRQ_DISABLE, bit, 0);
 }
 
 static inline void ra_net_pp_irq_disable(struct ra_net_priv *priv, u32 bit)
 {
-	ra_net_iow_mask(priv, RA_NET_PP_IRQ_DISABLE, bit, bit);
+	ra_net_iow_mask_locked(priv, RA_NET_PP_IRQ_DISABLE, bit, bit);
 }
 
 extern const struct ethtool_ops ra_net_ethtool_ops;
