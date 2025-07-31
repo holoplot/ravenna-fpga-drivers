@@ -97,15 +97,16 @@ static inline void ra_net_iow_mask(struct ra_net_priv *priv, off_t offset,
 				   u32 mask, u32 val)
 {
 	u32 r;
+	unsigned long flags;
 
-	// spin_lock(&priv->reg_lock);
+	spin_lock_irqsave(&priv->reg_lock, flags);
 
 	r = ra_net_ior(priv, offset);
 	r &= ~mask;
 	r |= val;
 	ra_net_iow(priv, offset, r);
 
-	// spin_unlock(&priv->reg_lock);
+	spin_unlock_irqrestore(&priv->reg_lock, flags);
 }
 
 static inline void ra_net_irq_enable(struct ra_net_priv *priv, u32 bit)
