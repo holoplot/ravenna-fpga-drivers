@@ -36,6 +36,14 @@ func Open(path string) (*Device, error) {
 	return d, nil
 }
 
+func (d *Device) Close() error {
+	if d.f != nil {
+		return d.f.Close()
+	}
+
+	return nil
+}
+
 func (d *Device) Info() DeviceInfo {
 	return d.info
 }
