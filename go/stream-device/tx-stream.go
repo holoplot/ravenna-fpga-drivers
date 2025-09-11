@@ -93,6 +93,14 @@ func (sd *TxStreamDescription) toIoctlStruct() []byte {
 	return buf.Bytes()
 }
 
+func (tx *TxStream) Index() int {
+	return tx.index
+}
+
+func (tx *TxStream) Description() TxStreamDescription {
+	return tx.description
+}
+
 func (tx *TxStream) Update(sd TxStreamDescription) error {
 	return tx.device.updateTxStream(tx, sd)
 }
