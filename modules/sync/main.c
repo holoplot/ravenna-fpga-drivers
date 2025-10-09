@@ -163,10 +163,19 @@ static int ra_sync_probe(struct platform_device *pdev)
 	if (ret < 0)
 		return ret;
 
+	platform_set_drvdata(pdev, priv);
+
 	dev_info(&pdev->dev, "Ravenna sync '%s', minor %d",
 		 priv->misc.name, priv->misc.minor);
 
 	return 0;
+}
+
+static void ra_sync_shutdown(struct platform_device *pdev)
+{
+	struct ra_sync_priv *priv = platform_get_drvdata(pdev);
+
+	clk_disable_unprepare(priv->mclk);
 }
 
 static const struct of_device_id ra_sync_of_ids[] = {
@@ -178,6 +187,7 @@ MODULE_DEVICE_TABLE(of, ra_sync_of_ids);
 static struct platform_driver ra_sync_driver =
 {
 	.probe = ra_sync_probe,
+	.shutdown = ra_sync_shutdown,
 	.driver = {
 		.name = "ravenna-sync",
 		.of_match_table = ra_sync_of_ids,
