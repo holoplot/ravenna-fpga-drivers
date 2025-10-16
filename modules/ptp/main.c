@@ -508,7 +508,7 @@ static int ra_ptp_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	ret = devm_device_add_groups(dev, ra_ptp_groups);
+	ret = device_add_groups(dev, ra_ptp_groups);
 	if (ret < 0)
 		return ret;
 
