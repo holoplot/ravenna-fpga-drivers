@@ -30,9 +30,9 @@ static irqreturn_t ra_sd_irqhandler(int irq, void *devid)
 	return ret;
 }
 
-int ra_sd_read_info_ioctl(struct ra_sd_priv *priv,
-			  unsigned int size,
-			  void __user *buf)
+static int ra_sd_read_info_ioctl(struct ra_sd_priv *priv,
+				 unsigned int size,
+				 void __user *buf)
 {
 	struct ra_sd_read_info_cmd cmd;
 
