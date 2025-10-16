@@ -5,6 +5,7 @@
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
 #include <linux/of.h>
+#include <linux/platform_device.h>
 
 #include "main.h"
 

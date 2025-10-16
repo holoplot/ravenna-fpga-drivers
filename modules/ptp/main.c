@@ -3,15 +3,16 @@
 // #define DEBUG 1
 
 #include <linux/cdev.h>
+#include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/iopoll.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <linux/of_irq.h>
 #include <linux/of_address.h>
+#include <linux/platform_device.h>
 #include <linux/pps_kernel.h>
 #include <linux/ptp_clock_kernel.h>
-#include <linux/clk.h>
 
 #include "regs.h"
 
