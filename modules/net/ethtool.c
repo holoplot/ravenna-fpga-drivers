@@ -7,9 +7,12 @@
 #include <linux/ethtool.h>
 #include <linux/phylink.h>
 #include <linux/of_platform.h>
+#include <linux/version.h>
+
 #include <uapi/linux/net_tstamp.h>
 
 #include <ravenna/version.h>
+
 #include "main.h"
 
 static const char ra_net_gstrings_stats[][ETH_GSTRING_LEN] = {
@@ -176,8 +179,13 @@ static void ra_net_ethtool_getregs(struct net_device *ndev,
 {
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
+static int ra_net_ethtool_get_ts_info(struct net_device *ndev,
+				      struct kernel_ethtool_ts_info *info)
+#else
 static int ra_net_ethtool_get_ts_info(struct net_device *ndev,
 				      struct ethtool_ts_info *info)
+#endif
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
 
