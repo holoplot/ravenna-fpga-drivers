@@ -8,12 +8,6 @@
 
 #include "main.h"
 
-static void ra_net_validate(struct phylink_config *config,
-			    unsigned long *supported,
-			    struct phylink_link_state *state)
-{
-}
-
 static void ra_net_mac_config(struct phylink_config *config, unsigned int mode,
 			      const struct phylink_link_state *state)
 {
@@ -54,7 +48,6 @@ static void ra_net_mac_link_up(struct phylink_config *config,
 }
 
 static const struct phylink_mac_ops ra_net_phylink_ops = {
-	.validate		= ra_net_validate,
 	.mac_config		= ra_net_mac_config,
 	.mac_link_down		= ra_net_mac_link_down,
 	.mac_link_up		= ra_net_mac_link_up,
