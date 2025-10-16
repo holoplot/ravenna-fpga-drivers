@@ -521,7 +521,7 @@ static int ra_ptp_probe(struct platform_device *pdev)
 	priv->ptp_clock_info.settime64	= ra_ptp_settime;
 	priv->ptp_clock_info.enable	= ra_ptp_enable;
 	priv->ptp_clock_info.owner	= THIS_MODULE;
-	strlcpy(priv->ptp_clock_info.name, "ravenna_ptp",
+	strncpy(priv->ptp_clock_info.name, "ravenna_ptp",
 		sizeof(priv->ptp_clock_info.name)-1);
 
 	if (id & RA_PTP_ID_PPS_AVAILABLE)

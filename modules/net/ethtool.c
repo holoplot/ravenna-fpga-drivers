@@ -154,9 +154,9 @@ static void ra_net_ethtool_getdrvinfo(struct net_device *ndev,
 	struct ra_net_priv *priv = netdev_priv(ndev);
 	const char *version = ra_driver_version();
 
-	strlcpy(info->driver, priv->dev->driver->name, sizeof(info->driver));
-	strlcpy(info->version, version, sizeof(info->version));
-	strlcpy(info->bus_info, dev_name(priv->dev), sizeof(info->bus_info));
+	strncpy(info->driver, priv->dev->driver->name, sizeof(info->driver));
+	strncpy(info->version, version, sizeof(info->version));
+	strncpy(info->bus_info, dev_name(priv->dev), sizeof(info->bus_info));
 }
 
 static u32 ra_net_ethtool_getmsglevel(struct net_device *ndev)
