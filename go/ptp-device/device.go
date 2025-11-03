@@ -29,6 +29,8 @@ func (d *Device) GetTimestampPair() (uint64, uint32, error) {
 		return 0, 0, fmt.Errorf("open failed: %w", err)
 	}
 
+	defer f.Close()
+
 	b, err := io.ReadAll(f)
 	if err != nil {
 		return 0, 0, fmt.Errorf("read failed: %w", err)
