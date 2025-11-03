@@ -13,11 +13,16 @@
 #include <linux/platform_device.h>
 #include <linux/pps_kernel.h>
 #include <linux/ptp_clock_kernel.h>
+#include <linux/version.h>
 
 #include "regs.h"
 
 #define RA_EVENT_OUT_MAX_PERIOD		(1 * NSEC_PER_SEC)
 #define RA_PTP_ADJ_TIME_MAX_OFFSET	(1 * NSEC_PER_SEC)
+#define RA_PTP_EXTTS_FLAGS		(PTP_ENABLE_FEATURE	| \
+					 PTP_RISING_EDGE	| \
+					 PTP_FALLING_EDGE	| \
+					 PTP_STRICT_FLAGS)
 
 struct ra_ptp_priv {
 	struct device		*dev;
@@ -523,6 +528,10 @@ static int ra_ptp_probe(struct platform_device *pdev)
 	priv->ptp_clock_info.owner	= THIS_MODULE;
 	strncpy(priv->ptp_clock_info.name, "ravenna_ptp",
 		sizeof(priv->ptp_clock_info.name)-1);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 16, 0)
+	priv->ptp_clock_info.supported_extts_flags = RA_PTP_EXTTS_FLAGS;
+#endif
 
 	if (id & RA_PTP_ID_PPS_AVAILABLE)
 		priv->ptp_clock_info.pps = 1;
