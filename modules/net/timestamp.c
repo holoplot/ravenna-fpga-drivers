@@ -13,7 +13,8 @@ void ra_net_tx_ts_irq(struct ra_net_priv *priv)
 {
 	struct ptp_packet_fpga_timestamp *ts_packet;
 	struct device *dev = priv->dev;
-	u32 ctr, sot;
+	int ctr;
+	u32 sot;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
