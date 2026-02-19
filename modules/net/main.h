@@ -32,6 +32,7 @@ struct ptp_packet_fpga_timestamp
 struct ra_net_tx_ts {
 	bool enable;
 	unsigned int reenable_irq;
+	unsigned int ts_lost;
 	struct work_struct work;
 	spinlock_t lock;
 

@@ -47,6 +47,7 @@ void ra_net_tx_ts_irq(struct ra_net_priv *priv)
 
 	if (unlikely(ctr < 0)) {
 		dev_dbg(dev, "%s(): no start of timestamp found\n", __func__);
+		priv->tx_ts.ts_lost++;
 		goto out_unlock;
 	}
 
@@ -144,6 +145,25 @@ static void ra_net_tx_ts_work(struct work_struct *work)
 
 	spin_lock_irqsave(&priv->tx_ts.lock, flags);
 
+	/* Drain any skbs whose timestamps were lost in the IRQ handler.
+	 * The FPGA read words from its FIFO without storing a ts entry,
+	 * so the skb list is ahead by ts_lost entries. Discard those skbs
+	 * now so the two lists stay synchronised for the correlation loop.
+	 */
+	while (priv->tx_ts.ts_lost > 0 &&
+	       priv->tx_ts.skb_wr_idx != priv->tx_ts.skb_rd_idx) {
+		struct sk_buff *skb = priv->tx_ts.skb_ptr[priv->tx_ts.skb_rd_idx];
+
+		net_err_ratelimited("%s: lost FPGA timestamp, discarding skb without stamp\n",
+				    priv->ndev->name);
+
+		dev_kfree_skb_any(skb);
+		priv->tx_ts.skb_ptr[priv->tx_ts.skb_rd_idx] = NULL;
+		priv->tx_ts.skb_rd_idx++;
+		priv->tx_ts.skb_rd_idx %= RA_NET_TX_SKB_LIST_SIZE;
+		priv->tx_ts.ts_lost--;
+	}
+
 	while (priv->tx_ts.skb_wr_idx != priv->tx_ts.skb_rd_idx &&
 	       priv->tx_ts.ts_wr_idx  != priv->tx_ts.ts_rd_idx) {
 		struct ptp_packet_fpga_timestamp *ts;
@@ -213,6 +233,7 @@ void ra_net_flush_tx_ts(struct ra_net_priv *priv)
 
 	priv->tx_ts.ts_rd_idx = 0;
 	priv->tx_ts.ts_wr_idx = 0;
+	priv->tx_ts.ts_lost = 0;
 
 	spin_unlock_irqrestore(&priv->tx_ts.lock, flags);
 }
