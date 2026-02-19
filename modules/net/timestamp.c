@@ -257,7 +257,8 @@ void ra_net_rx_apply_timestamp(struct ra_net_priv *priv,
 			       struct ptp_packet_fpga_timestamp *ts)
 {
 	struct skb_shared_hwtstamps *ts_ptr = skb_hwtstamps(skb);
-	u64 ns;
+	u64 seconds;
+	s64 ns;
 
 	if (!priv->rx_ts_enable)
 		return;
@@ -269,7 +270,8 @@ void ra_net_rx_apply_timestamp(struct ra_net_priv *priv,
 
 	dev_dbg(priv->dev, "Valid rx timestamp found\n");
 
-	ns = (s64)ts->seconds * NSEC_PER_SEC + ts->nanoseconds;
+	seconds = ((u64)ts->seconds_hi << 32) | ts->seconds;
+	ns = (s64)seconds * NSEC_PER_SEC + ts->nanoseconds;
 	ts_ptr->hwtstamp = ns_to_ktime(ns);
 }
 
