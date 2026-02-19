@@ -35,17 +35,17 @@ void ra_net_tx_ts_irq(struct ra_net_priv *priv)
 	// dev_dbg(dev, "TX_TS_COUNT: 0x%08X\n",
 	// 	ra_net_ior(priv, RA_NET_PTP_TX_TS_CNT));
 
-	for (ctr = sizeof(*ts_packet) / sizeof(u32); ctr >= 0; ctr--) {
+	for (ctr = sizeof(*ts_packet) / sizeof(u32) - 1; ctr >= 0; ctr--) {
 		sot = ra_net_ior(priv, RA_NET_TX_TIMESTAMP_FIFO);
 
 		if ((sot >> 16) == RA_NET_TX_TIMESTAMP_START_OF_TS)
 			break;
 	}
 
-	if (ctr != sizeof(*ts_packet) / sizeof(u32))
+	if (ctr != sizeof(*ts_packet) / sizeof(u32) - 1)
 		dev_dbg(dev, "misaligned timestamp for tx packet found\n");
 
-	if (unlikely(ctr == 0)) {
+	if (unlikely(ctr < 0)) {
 		dev_dbg(dev, "%s(): no start of timestamp found\n", __func__);
 		goto out_unlock;
 	}
