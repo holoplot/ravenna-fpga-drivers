@@ -89,7 +89,7 @@ static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 	 *    (FIXME: is this always true ?)
 	 */
 
-	if (skb->len + ETH_HLEN < offset + OFF_PTP_SEQUENCE_ID + sizeof(packet_seq_id)) {
+	if (skb->len < offset + OFF_PTP_SEQUENCE_ID + sizeof(packet_seq_id)) {
 		dev_dbg(dev,  "packet does not contain ptp sequence id (length invalid)\n");
 		return;
 	}
