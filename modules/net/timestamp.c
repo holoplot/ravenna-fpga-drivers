@@ -22,12 +22,10 @@ void ra_net_tx_ts_irq(struct ra_net_priv *priv)
 
 	if (unlikely((priv->tx_ts.ts_wr_idx+1) % RA_NET_TX_TS_LIST_SIZE ==
 		      priv->tx_ts.ts_rd_idx)) {
-		priv->tx_ts.reenable_irq = true;
-		ra_net_pp_irq_disable(priv, RA_NET_PP_IRQ_PTP_TX_TS_IRQ_AVAILABLE);
-		dev_err(dev, "tx timestamp buffer of %s full, IRQ disabled => %08x\n",
-			dev_name(dev),  ra_net_ior(priv, RA_NET_PP_IRQ_DISABLE));
-
-		goto out_unlock;
+		net_err_ratelimited("%s: tx timestamp buffer full, dropping oldest entry\n",
+				    dev_name(dev));
+		priv->tx_ts.ts_rd_idx++;
+		priv->tx_ts.ts_rd_idx %= RA_NET_TX_TS_LIST_SIZE;
 	}
 
 	ts_packet = &priv->tx_ts.fpga_ts[priv->tx_ts.ts_wr_idx];
@@ -205,11 +203,6 @@ static void ra_net_tx_ts_work(struct work_struct *work)
 		} else if (skb_consumed) {
 			dev_kfree_skb_any(skb);
 		}
-	}
-
-	if (priv->tx_ts.reenable_irq) {
-		priv->tx_ts.reenable_irq = false;
-		ra_net_pp_irq_enable(priv, RA_NET_PP_IRQ_PTP_TX_TS_IRQ_AVAILABLE);
 	}
 
 	spin_unlock_irqrestore(&priv->tx_ts.lock, flags);
