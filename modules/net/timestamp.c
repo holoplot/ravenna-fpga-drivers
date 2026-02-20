@@ -372,6 +372,31 @@ int ra_net_hwtstamp_ioctl(struct net_device *ndev, struct ifreq *ifr, int cmd)
 		return -EINVAL;
 	}
 
+	/* Validate both fields before applying either, to avoid partial config
+	 * on error (e.g. TX armed but RX filter unsupported → -EINVAL).
+	 */
+	switch(config.tx_type) {
+	case HWTSTAMP_TX_OFF:
+	case HWTSTAMP_TX_ON:
+		break;
+	default:
+		dev_err(dev, "%s() config.tx_type %d not supported\n",
+			__func__, config.tx_type);
+		return -EINVAL;
+	}
+
+	switch(config.rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+		break;
+	default:
+		dev_dbg(dev, "%s() config.rx_filter %i not supported\n",
+			__func__, config.rx_filter);
+		return -EINVAL;
+	}
+
 	switch(config.tx_type) {
 	case HWTSTAMP_TX_OFF:
 		dev_dbg(dev, "%s(): HWTSTAMP_TX_OFF\n", __func__);
@@ -384,11 +409,6 @@ int ra_net_hwtstamp_ioctl(struct net_device *ndev, struct ifreq *ifr, int cmd)
 		priv->tx_ts.enable = true;
 		ra_net_tx_ts_config(priv);
 		break;
-
-	default:
-		dev_err(dev, "%s() config.tx_type %d not supported\n",
-			__func__, config.tx_type);
-		return -EINVAL;
 	}
 
 	switch(config.rx_filter) {
@@ -409,11 +429,6 @@ int ra_net_hwtstamp_ioctl(struct net_device *ndev, struct ifreq *ifr, int cmd)
 
 		config.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_EVENT;
 		break;
-
-	default:
-		dev_dbg(dev, "%s() config.rx_filter %i not supported\n",
-			__func__, config.rx_filter);
-		return -EINVAL;
 	}
 
 	if (copy_to_user(ifr->ifr_data, &config, sizeof(config)))
