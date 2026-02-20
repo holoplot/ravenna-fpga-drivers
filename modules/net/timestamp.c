@@ -53,10 +53,10 @@ void ra_net_tx_ts_irq(struct ra_net_priv *priv)
 
 	ts_packet->seconds_hi = sot & 0xffff;
 
-	/* Pull the remaining data */
+	/* Pull the remaining data (one u32 already consumed as sot above) */
 	ra_net_ior_rep(priv, RA_NET_TX_TIMESTAMP_FIFO,
 		       &ts_packet->seconds,
-		       sizeof(*ts_packet) - sizeof(ts_packet->seconds_hi));
+		       sizeof(*ts_packet) - offsetof(typeof(*ts_packet), seconds));
 
 	dev_dbg(dev, "got timestamp for tx packet, wr_idx %d, seq_id 0x%04x\n",
 		priv->tx_ts.ts_wr_idx, ts_packet->sequence_id);
