@@ -332,6 +332,21 @@ void ra_net_tx_ts_init(struct ra_net_priv *priv)
 	INIT_WORK(&priv->tx_ts.work, ra_net_tx_ts_work);
 }
 
+int ra_net_hwtstamp_get(struct net_device *ndev, struct ifreq *ifr)
+{
+	struct ra_net_priv *priv = netdev_priv(ndev);
+	struct hwtstamp_config config = {};
+
+	config.tx_type = priv->tx_ts.enable ? HWTSTAMP_TX_ON : HWTSTAMP_TX_OFF;
+	config.rx_filter = priv->rx_ts_enable ?
+		HWTSTAMP_FILTER_PTP_V2_L4_EVENT : HWTSTAMP_FILTER_NONE;
+
+	if (copy_to_user(ifr->ifr_data, &config, sizeof(config)))
+		return -EFAULT;
+
+	return 0;
+}
+
 int ra_net_hwtstamp_ioctl(struct net_device *ndev, struct ifreq *ifr, int cmd)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);

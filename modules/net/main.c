@@ -447,10 +447,16 @@ static int ra_net_eth_ioctl(struct net_device *ndev, struct ifreq *rq, int cmd)
 	if (!netif_running(ndev))
 		return -EINVAL;
 
-	if (cmd == SIOCSHWTSTAMP)
+	switch (cmd) {
+	case SIOCSHWTSTAMP:
 		return ra_net_hwtstamp_ioctl(ndev, rq, cmd);
 
-	return phylink_mii_ioctl(priv->phylink, rq, cmd);
+	case SIOCGHWTSTAMP:
+		return ra_net_hwtstamp_get(ndev, rq);
+
+	default:
+		return phylink_mii_ioctl(priv->phylink, rq, cmd);
+	}
 }
 
 static int ra_net_vlan_rx_add_vid(struct net_device *ndev, __be16 proto, u16 vid)
