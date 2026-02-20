@@ -73,7 +73,9 @@ out_unlock:
 
 static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 				const struct ptp_packet_fpga_timestamp *ts,
-				bool *ts_consumed, bool *skb_consumed)
+				struct skb_shared_hwtstamps *shhwtstamps,
+				bool *ts_consumed, bool *skb_consumed,
+				bool *do_stamp)
 {
 	struct device *dev = priv->dev;
 	u8 *data = skb->data;
@@ -84,6 +86,7 @@ static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 
 	*ts_consumed = false;
 	*skb_consumed = true;
+	*do_stamp = false;
 
 	/* assumptions:
 	 *  - PTP packets are PTPV2 IPV4
@@ -101,7 +104,6 @@ static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 
 	if (likely(ts->sequence_id == packet_seq_id)) {
 		/* OK, timestamp is valid */
-		struct skb_shared_hwtstamps shhwtstamps;
 		u64 seconds;
 
 		dev_dbg(dev, "found valid timestamp for tx packet; sequence id 0x%04X\n",
@@ -110,12 +112,11 @@ static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 		seconds =  (u64)ts->seconds_hi << 32ULL;
 		seconds += (u64)ts->seconds;
 
-		shhwtstamps.hwtstamp =  seconds * NSEC_PER_SEC;
-		shhwtstamps.hwtstamp += (u64)ts->nanoseconds;
+		shhwtstamps->hwtstamp =  seconds * NSEC_PER_SEC;
+		shhwtstamps->hwtstamp += (u64)ts->nanoseconds;
 
 		*ts_consumed = true;
-
-		skb_tstamp_tx(skb, &shhwtstamps);
+		*do_stamp = true;
 
 		return;
 	}
@@ -166,21 +167,21 @@ static void ra_net_tx_ts_work(struct work_struct *work)
 
 	while (priv->tx_ts.skb_wr_idx != priv->tx_ts.skb_rd_idx &&
 	       priv->tx_ts.ts_wr_idx  != priv->tx_ts.ts_rd_idx) {
+		struct skb_shared_hwtstamps shhwtstamps = {};
 		struct ptp_packet_fpga_timestamp *ts;
-		bool ts_consumed, skb_consumed;
+		bool ts_consumed, skb_consumed, do_stamp;
 		struct sk_buff *skb;
 
 		skb = priv->tx_ts.skb_ptr[priv->tx_ts.skb_rd_idx];
 		ts = &priv->tx_ts.fpga_ts[priv->tx_ts.ts_rd_idx];
 
-		ra_net_stamp_tx_skb(priv, skb, ts,
-				    &ts_consumed, &skb_consumed);
+		ra_net_stamp_tx_skb(priv, skb, ts, &shhwtstamps,
+				    &ts_consumed, &skb_consumed, &do_stamp);
 
 		if (WARN_ON(!skb_consumed && !ts_consumed))
 			break;
 
 		if (skb_consumed) {
-			dev_kfree_skb_any(skb);
 			priv->tx_ts.skb_ptr[priv->tx_ts.skb_rd_idx] = NULL;
 
 			priv->tx_ts.skb_rd_idx++;
@@ -190,6 +191,19 @@ static void ra_net_tx_ts_work(struct work_struct *work)
 		if (ts_consumed) {
 			priv->tx_ts.ts_rd_idx++;
 			priv->tx_ts.ts_rd_idx %= RA_NET_TX_TS_LIST_SIZE;
+		}
+
+		if (do_stamp) {
+			/* Deliver the timestamp outside the spinlock: skb_tstamp_tx
+			 * acquires the socket error queue lock, which must not be
+			 * nested inside a driver spinlock held with IRQs disabled.
+			 */
+			spin_unlock_irqrestore(&priv->tx_ts.lock, flags);
+			skb_tstamp_tx(skb, &shhwtstamps);
+			dev_kfree_skb_any(skb);
+			spin_lock_irqsave(&priv->tx_ts.lock, flags);
+		} else if (skb_consumed) {
+			dev_kfree_skb_any(skb);
 		}
 	}
 
