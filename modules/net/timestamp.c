@@ -275,9 +275,9 @@ bool ra_net_tx_ts_queue(struct ra_net_priv *priv, struct sk_buff *skb)
 	priv->tx_ts.skb_wr_idx++;
 	priv->tx_ts.skb_wr_idx %= RA_NET_TX_SKB_LIST_SIZE;
 
-	spin_unlock_irqrestore(&priv->tx_ts.lock, flags);
-
 	skb_sh->tx_flags |= SKBTX_IN_PROGRESS;
+
+	spin_unlock_irqrestore(&priv->tx_ts.lock, flags);
 
 	return true;
 }
