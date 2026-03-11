@@ -505,14 +505,6 @@ static int ra_ptp_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	irq = of_irq_get(node, 0);
-	ret = devm_request_irq(dev, irq, ra_ptp_irqhandler, IRQF_SHARED,
-			       dev_name(dev), priv);
-	if (ret < 0) {
-		dev_err(dev, "could not map Ravenna sync IRQ\n");
-		return ret;
-	}
-
 	ret = device_add_groups(dev, ra_ptp_groups);
 	if (ret < 0)
 		return ret;
@@ -549,6 +541,14 @@ static int ra_ptp_probe(struct platform_device *pdev)
 
 	/* The ethernet driver will access the PTP clock through the driver-data */
 	platform_set_drvdata(pdev, priv->ptp_clock);
+
+	irq = of_irq_get(node, 0);
+	ret = devm_request_irq(dev, irq, ra_ptp_irqhandler, IRQF_SHARED,
+			       dev_name(dev), priv);
+	if (ret < 0) {
+		dev_err(dev, "could not map Ravenna sync IRQ\n");
+		return ret;
+	}
 
 	dev_info(dev, "Ravenna PTP, clock index %d\n",
 		 ptp_clock_index(priv->ptp_clock));
