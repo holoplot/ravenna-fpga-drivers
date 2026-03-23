@@ -2,15 +2,15 @@ package main
 
 import (
 	"flag"
+	"log/slog"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/holoplot/ravenna-fpga-drivers/go/internal/logger"
 	rsd "github.com/holoplot/ravenna-fpga-drivers/go/stream-device"
-	"github.com/mattn/go-colorable"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 func main() {
@@ -34,33 +34,29 @@ func main() {
 	rtpSsrcFlag := flag.Int("rtp-ssrc", 1, "RTP Sync Source Identifier")
 	rtpPayloadTypeFlag := flag.Int("rtp-payload-type", 98, "RTP payload type")
 	trackMapFlag := flag.String("track-map", "", "Comma separated list of tracks to map. Defaults to 1:1 mapping to channels.")
+	debugFlag := flag.Bool("debug", false, "Enable debug log")
 	flag.Parse()
 
-	consoleWriter := zerolog.ConsoleWriter{
-		Out: colorable.NewColorableStdout(),
-	}
-
-	log.Logger = log.Output(consoleWriter)
+	logger.Setup(*debugFlag)
 
 	if (*primaryDestinationIpFlag == "" || *primarySourceIpFlag == "") &&
 		(*secondaryDestinationIpFlag == "" || *secondarySourceIpFlag == "") {
-		log.Fatal().Msg("-pri-src-ip/-pri-dst-ip and/or -sec-src-ip/-sec-dst-ip must be passed")
+		slog.Error("-pri-src-ip/-pri-dst-ip and/or -sec-src-ip/-sec-dst-ip must be passed")
+
+		os.Exit(1)
 	}
 
 	sd, err := rsd.Open(*deviceFileFlag)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("path", *deviceFileFlag).
-			Msg("Unable to open device file")
+		slog.Error("Unable to open device file", "error", err, "path", *deviceFileFlag)
+		os.Exit(1)
 	}
 
-	log.Info().
-		Int("max-tracks", sd.Info().MaxTracks).
-		Int("max-rx-streams", sd.Info().MaxRxStreams).
-		Int("max-tx-streams", sd.Info().MaxTxStreams).
-		Str("path", *deviceFileFlag).
-		Msg("Device file opened")
+	slog.Info("Device file opened",
+		"max-tracks", sd.Info().MaxTracks,
+		"max-rx-streams", sd.Info().MaxRxStreams,
+		"max-tx-streams", sd.Info().MaxTxStreams,
+		"path", *deviceFileFlag)
 
 	txDesc := rsd.TxStreamDescription{
 		Active:         true,
@@ -121,47 +117,43 @@ func main() {
 
 	tx, err := sd.AddTxStream(txDesc)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Unable to add TX stream")
+		slog.Error("Unable to add TX stream", "error", err)
+
+		os.Exit(1)
 	}
 
-	log.Info().
-		Uint16("channels", txDesc.NumChannels).
-		Uint8("samples", txDesc.NumSamples).
-		Uint8("ttl", txDesc.Ttl).
-		Bool("primary", txDesc.UsePrimary).
-		Bool("secondary", txDesc.UseSecondary).
-		IPAddr("primary-destination-ip", txDesc.Primary.Destination.IP).
-		IPAddr("primary-source-ip", txDesc.Primary.Source.IP).
-		Int("primary-port", txDesc.Primary.Destination.Port).
-		IPAddr("secondary-destination-ip", txDesc.Secondary.Destination.IP).
-		IPAddr("secondary-source-ip", txDesc.Secondary.Source.IP).
-		Int("secondary-port", txDesc.Secondary.Destination.Port).
-		Uint16("primary-vlan", txDesc.Primary.VlanTag).
-		Uint16("secondary-vlan", txDesc.Secondary.VlanTag).
-		Uint32("rtp-offset", txDesc.RtpOffset).
-		Uint32("rtp-ssrc", txDesc.RtpSsrc).
-		Uint8("rtp-payload-type", txDesc.RtpPayloadType).
-		Bool("multicast", txDesc.Multicast).
-		Ints16("tx-tracks", txDesc.Tracks[:txDesc.NumChannels]).
-		Msg("TX stream added")
+	slog.Info("TX stream added",
+		"channels", txDesc.NumChannels,
+		"samples", txDesc.NumSamples,
+		"ttl", txDesc.Ttl,
+		"primary", txDesc.UsePrimary,
+		"secondary", txDesc.UseSecondary,
+		"primary-destination-ip", txDesc.Primary.Destination.IP,
+		"primary-source-ip", txDesc.Primary.Source.IP,
+		"primary-port", txDesc.Primary.Destination.Port,
+		"secondary-destination-ip", txDesc.Secondary.Destination.IP,
+		"secondary-source-ip", txDesc.Secondary.Source.IP,
+		"secondary-port", txDesc.Secondary.Destination.Port,
+		"primary-vlan", txDesc.Primary.VlanTag,
+		"secondary-vlan", txDesc.Secondary.VlanTag,
+		"rtp-offset", txDesc.RtpOffset,
+		"rtp-ssrc", txDesc.RtpSsrc,
+		"rtp-payload-type", txDesc.RtpPayloadType,
+		"multicast", txDesc.Multicast,
+		"tx-tracks", txDesc.Tracks[:txDesc.NumChannels])
 
-	log.Info().Msg("Hit ^C to exit.")
+	slog.Info("Hit ^C to exit.")
 
 	for {
 		time.Sleep(time.Second)
 
 		if r, err := tx.ReadRTCP(time.Second); err == nil {
-			log.Info().
-				Uint32("rtp-timestamp", r.RtpTimestamp).
-				Msg("RTCP general data")
+			slog.Info("RTCP general data", "rtp-timestamp", r.RtpTimestamp)
 
 			logInterfaceData := func(i rsd.TxRTCPInterfaceData, msg string) {
-				log.Info().
-					Uint32("sent-packets", i.SentPackets).
-					Uint32("sent-rtp-bytes", i.SentRTPBytes).
-					Msg(msg)
+				slog.Info(msg,
+					"sent-packets", i.SentPackets,
+					"sent-rtp-bytes", i.SentRTPBytes)
 			}
 
 			logInterfaceData(r.Primary, "RTCP data primary")
@@ -170,7 +162,7 @@ func main() {
 				logInterfaceData(r.Secondary, "RTCP data secondary")
 			}
 		} else {
-			log.Error().Err(err).Msg("Error reading RTCP")
+			slog.Error("Error reading RTCP", "error", err)
 		}
 	}
 }

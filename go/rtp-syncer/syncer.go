@@ -3,13 +3,13 @@ package syncer
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math/big"
 	"time"
 
 	"github.com/holoplot/go-linuxptp/pkg/ptp"
 	rnd "github.com/holoplot/ravenna-fpga-drivers/go/network-device"
 	rpd "github.com/holoplot/ravenna-fpga-drivers/go/ptp-device"
-	"github.com/rs/zerolog/log"
 )
 
 type RtpSyncer struct {
@@ -98,7 +98,7 @@ func (s *RtpSyncer) Run(ctx context.Context, interval time.Duration, cb UpdateFu
 		case <-time.After(interval):
 			ptpTimestamp, localMediaTime, err := s.pd.GetTimestampPair()
 			if err != nil {
-				log.Error().Err(err).Msg("Failed to read timestamps")
+				slog.Error("Failed to read timestamps", "error", err)
 
 				continue
 			}
@@ -106,13 +106,12 @@ func (s *RtpSyncer) Run(ctx context.Context, interval time.Duration, cb UpdateFu
 			subs := s.ptpTimestampToSubSamples(ptpTimestamp).
 				subtractSamples(localMediaTime)
 
-			log.Debug().
-				Uint64("ptpTimestamp", ptpTimestamp).
-				Uint32("localMediaTime", localMediaTime).
-				Uint64("subSamples", uint64(subs)).
-				Int64("diffSubSamples", subs.diff(s.lastSubSamples)).
-				Uint32("offset", subs.toSamples32()).
-				Msg("Timestamps")
+			slog.Debug("Timestamps",
+				"ptpTimestamp", ptpTimestamp,
+				"localMediaTime", localMediaTime,
+				"subSamples", uint64(subs),
+				"diffSubSamples", subs.diff(s.lastSubSamples),
+				"offset", subs.toSamples32())
 
 			if subs.diffAbs(s.lastSubSamples) >= subSamplesDeviationThreshold {
 				offset := subs.toSamples32()

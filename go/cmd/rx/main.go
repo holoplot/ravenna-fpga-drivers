@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/holoplot/ravenna-fpga-drivers/go/internal/logger"
 	rsd "github.com/holoplot/ravenna-fpga-drivers/go/stream-device"
-	"github.com/mattn/go-colorable"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 func main() {
@@ -31,32 +31,29 @@ func main() {
 	rtpFilterFlag := flag.Bool("rtp-filter", false, "Use RTP filter")
 	hitlessFlag := flag.Bool("hitless", false, "Hitless protection")
 	trackMapFlag := flag.String("track-map", "", "Comma separated list of tracks to map. Defaults to 1:1 mapping to channels.")
+	debugFlag := flag.Bool("debug", false, "Enable debug log")
 	flag.Parse()
 
-	consoleWriter := zerolog.ConsoleWriter{
-		Out: colorable.NewColorableStdout(),
-	}
-
-	log.Logger = log.Output(consoleWriter)
+	logger.Setup(*debugFlag)
 
 	if *primaryIpFlag == "" && *secondaryIpFlag == "" {
-		log.Fatal().Msg("-pri-ip or -sec-ip must be passed")
+		slog.Error("-pri-ip or -sec-ip must be passed")
+
+		os.Exit(1)
 	}
 
 	sd, err := rsd.Open(*deviceFileFlag)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("path", *deviceFileFlag).
-			Msg("Unable to open device file")
+		slog.Error("Unable to open device file", "error", err, "path", *deviceFileFlag)
+
+		os.Exit(1)
 	}
 
-	log.Info().
-		Int("max-tracks", sd.Info().MaxTracks).
-		Int("max-rx-streams", sd.Info().MaxRxStreams).
-		Int("max-tx-streams", sd.Info().MaxTxStreams).
-		Str("path", *deviceFileFlag).
-		Msg("Device file opened")
+	slog.Info("Device file opened",
+		"max-tracks", sd.Info().MaxTracks,
+		"max-rx-streams", sd.Info().MaxRxStreams,
+		"max-tx-streams", sd.Info().MaxTxStreams,
+		"path", *deviceFileFlag)
 
 	rxDesc := rsd.RxStreamDescription{
 		Active:            true,
@@ -80,29 +77,26 @@ func main() {
 	listenMulticast := func(ctx context.Context, ifiName string, addr net.UDPAddr) {
 		if ifi, err := net.InterfaceByName(ifiName); err == nil {
 			if l, err := net.ListenMulticastUDP("udp4", ifi, &addr); err == nil {
-				log.Info().
-					Str("interface", ifiName).
-					IPAddr("ip", addr.IP).
-					Int("port", addr.Port).
-					Msg("Listening")
+				slog.Info("Listening",
+					"interface", ifiName,
+					"ip", addr.IP,
+					"port", addr.Port)
 
 				go func() {
 					<-ctx.Done()
 					l.Close()
 				}()
 			} else {
-				log.Error().
-					Err(err).
-					Str("interface", ifiName).
-					IPAddr("ip", addr.IP).
-					Int("port", addr.Port).
-					Msg("Cannot listen")
+				slog.Error("Cannot listen",
+					"error", err,
+					"interface", ifiName,
+					"ip", addr.IP,
+					"port", addr.Port)
 			}
 		} else {
-			log.Error().
-				Err(err).
-				Str("interface", ifiName).
-				Msg("Unable to lookup network interface")
+			slog.Error("Unable to lookup network interface",
+				"error", err,
+				"interface", ifiName)
 		}
 	}
 
@@ -153,61 +147,58 @@ func main() {
 
 	rx, err := sd.AddRxStream(rxDesc)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Unable to add RX stream")
+		slog.Error("Unable to add RX stream", "error", err)
+
+		os.Exit(1)
 	}
 
-	log.Info().
-		Uint16("channels", rxDesc.NumChannels).
-		IPAddr("primary-ip", rxDesc.PrimaryDestination.IP).
-		Int("primary-port", rxDesc.PrimaryDestination.Port).
-		IPAddr("secondary-ip", rxDesc.SecondaryDestination.IP).
-		Int("secondary-port", rxDesc.SecondaryDestination.Port).
-		Uint16("jitter-buffer-margin", rxDesc.JitterBufferMargin).
-		Uint32("rtp-offset", rxDesc.RtpOffset).
-		Uint32("rtp-ssrc", rxDesc.RtpSsrc).
-		Uint8("rtp-payload-type", rxDesc.RtpPayloadType).
-		Bool("rtp-filter", rxDesc.RtpFilter).
-		Bool("synchronous", rxDesc.Synchronous).
-		Bool("sync-source", rxDesc.SyncSource).
-		Bool("hitless", rxDesc.HitlessProtection).
-		Ints16("rx-tracks", rxDesc.Tracks[:rxDesc.NumChannels]).
-		Msg("RX stream added")
+	slog.Info("RX stream added",
+		"channels", rxDesc.NumChannels,
+		"primary-ip", rxDesc.PrimaryDestination.IP,
+		"primary-port", rxDesc.PrimaryDestination.Port,
+		"secondary-ip", rxDesc.SecondaryDestination.IP,
+		"secondary-port", rxDesc.SecondaryDestination.Port,
+		"jitter-buffer-margin", rxDesc.JitterBufferMargin,
+		"rtp-offset", rxDesc.RtpOffset,
+		"rtp-ssrc", rxDesc.RtpSsrc,
+		"rtp-payload-type", rxDesc.RtpPayloadType,
+		"rtp-filter", rxDesc.RtpFilter,
+		"synchronous", rxDesc.Synchronous,
+		"sync-source", rxDesc.SyncSource,
+		"hitless", rxDesc.HitlessProtection,
+		"rx-tracks", rxDesc.Tracks[:rxDesc.NumChannels])
 
-	log.Info().Msg("Hit ^C to exit.")
+	slog.Info("Hit ^C to exit.")
 
 	for {
 		time.Sleep(time.Second)
 
 		if r, err := rx.ReadRTCP(time.Second); err == nil {
-			log.Info().
-				Uint32("rtp-timestamp", r.RtpTimestamp).
-				Uint8("dev-state", r.DevState).
-				Uint8("rtp-payload-id", r.RtpPayloadId).
-				Uint16("offset-estimation", r.OffsetEstimation).
-				Int32("path-differential", r.PathDifferential).
-				Msg("RTCP general")
+			slog.Info("RTCP general",
+				"rtp-timestamp", r.RtpTimestamp,
+				"dev-state", r.DevState,
+				"rtp-payload-id", r.RtpPayloadId,
+				"offset-estimation", r.OffsetEstimation,
+				"path-differential", r.PathDifferential)
 
 			logInterfaceData := func(i rsd.RxRTCPInterfaceData, msg string) {
-				log.Info().
-					Uint16("misordered-packets", i.MisorderedPackets).
-					Uint16("base-sequence-nr", i.BaseSequenceNr).
-					Uint32("extended-max-sequence-nr", i.ExtendedMaxSequenceNr).
-					Uint32("received-packets", i.ReceivedPackets).
-					Uint16("peak-jitter", i.PeakJitter).
-					Uint16("estimated-jitter", i.EstimatedJitter).
-					Uint16("last-transit-time", i.LastTransitTime).
-					Uint16("current-offset-estimation", i.CurrentOffsetEstimation).
-					Uint32("last-ssrc", i.LastSsrc).
-					Uint16("buffer-margin-min", i.BufferMarginMin).
-					Uint16("buffer-margin-max", i.BufferMarginMax).
-					Uint16("late-packets", i.LatePackets).
-					Uint16("early-packets", i.EarlyPackets).
-					Uint16("timeout-counter", i.TimeoutCounter).
-					Bool("playing", i.Playing).
-					Bool("error", i.Error).
-					Msg(msg)
+				slog.Info(msg,
+					"misordered-packets", i.MisorderedPackets,
+					"base-sequence-nr", i.BaseSequenceNr,
+					"extended-max-sequence-nr", i.ExtendedMaxSequenceNr,
+					"received-packets", i.ReceivedPackets,
+					"peak-jitter", i.PeakJitter,
+					"estimated-jitter", i.EstimatedJitter,
+					"last-transit-time", i.LastTransitTime,
+					"current-offset-estimation", i.CurrentOffsetEstimation,
+					"last-ssrc", i.LastSsrc,
+					"buffer-margin-min", i.BufferMarginMin,
+					"buffer-margin-max", i.BufferMarginMax,
+					"late-packets", i.LatePackets,
+					"early-packets", i.EarlyPackets,
+					"timeout-counter", i.TimeoutCounter,
+					"playing", i.Playing,
+					"error", i.Error)
 			}
 
 			logInterfaceData(r.Primary, "RTCP primary")
@@ -216,7 +207,7 @@ func main() {
 				logInterfaceData(r.Secondary, "RTCP secondary")
 			}
 		} else {
-			log.Error().Err(err).Msg("Error reading RTCP")
+			slog.Error("Error reading RTCP", "error", err)
 		}
 	}
 }

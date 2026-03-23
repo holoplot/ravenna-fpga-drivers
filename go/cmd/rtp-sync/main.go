@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
+	"os"
 	"time"
 
+	"github.com/holoplot/ravenna-fpga-drivers/go/internal/logger"
 	rs "github.com/holoplot/ravenna-fpga-drivers/go/rtp-syncer"
-	"github.com/mattn/go-colorable"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 func main() {
@@ -17,32 +17,27 @@ func main() {
 	debugFlag := flag.Bool("debug", false, "Enable debug log")
 	flag.Parse()
 
-	consoleWriter := zerolog.ConsoleWriter{
-		Out: colorable.NewColorableStdout(),
-	}
-
-	log.Logger = log.Output(consoleWriter)
-
-	if *debugFlag {
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	}
+	logger.Setup(*debugFlag)
 
 	syncer, err := rs.New(*netDeviceIndexFlag, *sampleRateFlag)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create RTP syncer")
+		slog.Error("Failed to create RTP syncer", "error", err)
+
+		os.Exit(1)
 	}
 
-	log.Info().Msg("Starting monitor")
+	slog.Info("Starting monitor")
 
 	ctx := context.Background()
 
 	if err := syncer.Run(ctx, time.Second, func(ctx context.Context, s *rs.RtpSyncer, oldOffset, newOffset uint32) {
-		log.Info().
-			Uint32("old-offset", oldOffset).
-			Uint32("new-offset", newOffset).
-			Msg("RTP/PTP offset updated")
+		slog.Info("RTP/PTP offset updated",
+			"old-offset", oldOffset,
+			"new-offset", newOffset)
 	}); err != nil {
-		log.Fatal().Err(err).Msg("Failed to run RTP syncer")
+		slog.Error("Failed to run RTP syncer", "error", err)
+
+		os.Exit(1)
 	}
 
 	<-ctx.Done()
