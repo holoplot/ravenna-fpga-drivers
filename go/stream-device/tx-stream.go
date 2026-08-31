@@ -117,7 +117,7 @@ func (tx *TxStream) ReadRTCP(timeout time.Duration) (TxRTCPData, error) {
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
-	code := ioctlMakeCode(ioctlDirRead|ioctlDirWrite, 'r', 0x11, uintptr(len(b)))
+	code := ioctlMakeCode(ioctlDirRead|ioctlDirWrite, 'r', 0x11, len(b))
 	if err := doIoctl(tx.device.f.Fd(), code, p); err != nil {
 		return TxRTCPData{}, err
 	}

@@ -55,7 +55,7 @@ func (d *Device) readInfo() error {
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
-	code := ioctlMakeCode(ioctlDirRead|ioctlDirWrite, 'r', 0x00, uintptr(len(b)))
+	code := ioctlMakeCode(ioctlDirRead|ioctlDirWrite, 'r', 0x00, len(b))
 	if err := doIoctl(d.f.Fd(), code, p); err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (d *Device) AddRxStream(sd RxStreamDescription) (*RxStream, error) {
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
-	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x30, uintptr(len(b)))
+	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x30, len(b))
 	index, err := doIoctlWithRet(d.f.Fd(), code, p)
 
 	if err != nil {
@@ -106,7 +106,7 @@ func (d *Device) updateRxStream(rx *RxStream, sd RxStreamDescription) error {
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
-	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x31, uintptr(len(b)))
+	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x31, len(b))
 	return doIoctl(d.f.Fd(), code, p)
 }
 
@@ -117,7 +117,7 @@ func (d *Device) deleteRxStream(rx *RxStream) error {
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
-	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x32, uintptr(len(b)))
+	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x32, len(b))
 	return doIoctl(d.f.Fd(), code, p)
 }
 
@@ -128,7 +128,7 @@ func (d *Device) AddTxStream(sd TxStreamDescription) (*TxStream, error) {
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
-	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x20, uintptr(len(b)))
+	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x20, len(b))
 
 	index, err := doIoctlWithRet(d.f.Fd(), code, p)
 	if err != nil {
@@ -150,7 +150,7 @@ func (d *Device) updateTxStream(tx *TxStream, sd TxStreamDescription) error {
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
-	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x21, uintptr(len(b)))
+	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x21, len(b))
 	return doIoctl(d.f.Fd(), code, p)
 }
 
@@ -161,6 +161,6 @@ func (d *Device) deleteTxStream(tx *TxStream) error {
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
-	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x22, uintptr(len(b)))
+	code := ioctlMakeCode(ioctlDirWrite, 'r', 0x22, len(b))
 	return doIoctl(d.f.Fd(), code, p)
 }

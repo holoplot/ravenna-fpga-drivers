@@ -28,7 +28,7 @@ func doIoctl(fd uintptr, code uint32, ptr unsafe.Pointer) error {
 	return err
 }
 
-func ioctlMakeCode(dir, typ, nr int, size uintptr) uint32 {
+func ioctlMakeCode(dir, typ, nr, size int) uint32 {
 	var code uint32
 	if dir > ioctlDirWrite|ioctlDirRead {
 		panic(fmt.Errorf("invalid ioctl dir value: %d", dir))
