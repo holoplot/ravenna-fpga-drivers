@@ -1,5 +1,5 @@
-github.com/holoplot/go-linuxptp v0.0.0-20260707093333-26d69e41f083 h1:gKua/ksRz2Vc/JerL+T/8/oZhjCxECamB0g2W2IJORs=
-github.com/holoplot/go-linuxptp v0.0.0-20260707093333-26d69e41f083/go.mod h1:GvPZUFTPlJK7zSq6V33P2MjvC2WDlS4lNXJ/fArdGvw=
+github.com/holoplot/go-linuxptp v0.0.0-20260831075127-31fb10316ad0 h1:q3ONS/eRMUTqR+BB+r9reVmBetP/QgKcz2bavK6+e0o=
+github.com/holoplot/go-linuxptp v0.0.0-20260831075127-31fb10316ad0/go.mod h1:OWY7cLwiEwGdbh4wdpGwV7tWaUDkTv4mIMo1JAPiApM=
 github.com/lmittmann/tint v1.2.0 h1:AogHRHy8HUJUnNJBHJlYa+fR4YY8mko2cnCp67xn9JY=
 github.com/lmittmann/tint v1.2.0/go.mod h1:HIS3gSy7qNwGCj+5oRjAutErFBl4BzdQP6cJZ0NfMwE=
 github.com/safchain/ethtool v0.7.0 h1:rlJzfDetsVvT61uz8x1YIcFn12akMfuPulHtZjtb7Is=
