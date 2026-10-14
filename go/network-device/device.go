@@ -134,7 +134,7 @@ func (d *Device) GetStreamPacketCounter() (uint64, uint64, error) {
 func (d *Device) GetPTPClockIndex() (int, error) {
 	e, err := ethtool.NewEthtool()
 	if err != nil {
-		panic(err.Error())
+		return 0, fmt.Errorf("failed to open ethtool: %w", err)
 	}
 	defer e.Close()
 
