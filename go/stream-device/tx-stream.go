@@ -102,7 +102,13 @@ func (tx *TxStream) Description() TxStreamDescription {
 }
 
 func (tx *TxStream) Update(sd TxStreamDescription) error {
-	return tx.device.updateTxStream(tx, sd)
+	if err := tx.device.updateTxStream(tx, sd); err != nil {
+		return err
+	}
+
+	tx.description = sd
+
+	return nil
 }
 
 func (tx *TxStream) Close() error {

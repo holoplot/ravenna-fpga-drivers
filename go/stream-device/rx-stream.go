@@ -86,7 +86,13 @@ func (rx *RxStream) Description() RxStreamDescription {
 }
 
 func (rx *RxStream) Update(sd RxStreamDescription) error {
-	return rx.device.updateRxStream(rx, sd)
+	if err := rx.device.updateRxStream(rx, sd); err != nil {
+		return err
+	}
+
+	rx.description = sd
+
+	return nil
 }
 
 func (rx *RxStream) Close() error {
