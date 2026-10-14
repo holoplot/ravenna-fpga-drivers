@@ -179,6 +179,7 @@ out_unlock:
 	mutex_unlock(&rx->mutex);
 
 	if (ret < 0) {
+		put_pid(e->pid);
 		kfree(e);
 		return ret;
 	}

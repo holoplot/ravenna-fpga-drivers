@@ -160,6 +160,7 @@ out_unlock:
 	mutex_unlock(&tx->mutex);
 
 	if (ret < 0) {
+		put_pid(e->pid);
 		kfree(e);
 		return ret;
 	}
