@@ -62,7 +62,7 @@ func (sd *RxStreamDescription) toIoctlStruct() []byte {
 
 	binary.Write(buf, binary.LittleEndian, sd.Active)
 
-	binary.Write(buf, binary.LittleEndian, sd.VlanTag)
+	binary.Write(buf, binary.BigEndian, sd.VlanTag)
 	binary.Write(buf, binary.LittleEndian, sd.JitterBufferMargin)
 
 	binary.Write(buf, binary.LittleEndian, sd.RtpOffset)
