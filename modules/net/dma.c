@@ -6,11 +6,60 @@
 
 #include "main.h"
 
-static void ra_net_dma_release_channel(void *data) {
-	struct dma_chan *chan = data;
+struct ra_net_dma_rx_ctx {
+	struct ra_net_priv *priv;
+	struct sk_buff *skb;
+	dma_addr_t dma_addr;
+	bool timestamped;
+	size_t len, buf_len;
+};
 
-	dmaengine_terminate_all(chan);
-	dma_release_channel(chan);
+/* Drop a transfer that was submitted but never completed */
+static void ra_net_dma_rx_ctx_discard(struct ra_net_priv *priv,
+				      struct ra_net_dma_rx_ctx *ctx)
+{
+	struct device *dma_dev = dmaengine_get_dma_device(priv->dma_rx_chan);
+
+	dma_unmap_single(dma_dev, ctx->dma_addr, ctx->buf_len, DMA_FROM_DEVICE);
+	kfree_skb(ctx->skb);
+	kfree(ctx);
+}
+
+/*
+ * Stop the channel and clean up what was in flight. Terminating drops the
+ * descriptor without calling its callback, so the buffer would leak.
+ *
+ * Process context only. Once this returns nothing is in flight and nothing
+ * new is submitted until ra_net_dma_start().
+ */
+static void ra_net_dma_stop(struct ra_net_priv *priv)
+{
+	struct ra_net_dma_rx_ctx *ctx;
+	unsigned long flags;
+
+	/*
+	 * Callbacks resubmit the next transfer, and so can the interrupt
+	 * handler, so block that before terminating or the terminate could be
+	 * followed by a new transfer.
+	 */
+	spin_lock_irqsave(&priv->dma_lock, flags);
+	priv->dma_rx_stopped = true;
+	spin_unlock_irqrestore(&priv->dma_lock, flags);
+
+	dmaengine_terminate_sync(priv->dma_rx_chan);
+
+	/* If a callback ran to completion it already took the context */
+	ctx = xchg(&priv->dma_rx_ctx, NULL);
+	if (ctx)
+		ra_net_dma_rx_ctx_discard(priv, ctx);
+}
+
+static void ra_net_dma_release_channel(void *data)
+{
+	struct ra_net_priv *priv = data;
+
+	ra_net_dma_stop(priv);
+	dma_release_channel(priv->dma_rx_chan);
 }
 
 int ra_net_dma_probe(struct ra_net_priv *priv) {
@@ -53,7 +102,7 @@ int ra_net_dma_probe(struct ra_net_priv *priv) {
 	}
 
 	ret = devm_add_action_or_reset(priv->dev, ra_net_dma_release_channel,
-				       priv->dma_rx_chan);
+				       priv);
 	if (ret < 0)
 		return ret;
 
@@ -66,20 +115,25 @@ int ra_net_dma_probe(struct ra_net_priv *priv) {
 	return 0;
 }
 
-void ra_net_dma_flush(struct ra_net_priv *priv) {
+void ra_net_dma_start(struct ra_net_priv *priv)
+{
+	unsigned long flags;
+
+	if (!priv->dma_rx_chan)
+		return;
+
+	spin_lock_irqsave(&priv->dma_lock, flags);
+	priv->dma_rx_stopped = false;
+	spin_unlock_irqrestore(&priv->dma_lock, flags);
+}
+
+void ra_net_dma_flush(struct ra_net_priv *priv)
+{
 	if (priv->dma_rx_chan)
-		dmaengine_terminate_all(priv->dma_rx_chan);
+		ra_net_dma_stop(priv);
 }
 
 /* RX */
-
-struct ra_net_dma_rx_ctx {
-	struct ra_net_priv *priv;
-	struct sk_buff *skb;
-	dma_addr_t dma_addr;
-	bool timestamped;
-	size_t len, buf_len;
-};
 
 static int ra_net_dma_rx_one(struct ra_net_priv *priv);
 
@@ -88,6 +142,10 @@ static void ra_net_dma_rx_callback(void *arg)
 	struct ra_net_dma_rx_ctx *ctx = arg;
 	struct ra_net_priv *priv = ctx->priv;
 	struct device *dma_dev;
+
+	/* ra_net_dma_stop() already cleaned up if it got here first */
+	if (cmpxchg(&priv->dma_rx_ctx, ctx, NULL) != ctx)
+		return;
 
 	dma_dev = dmaengine_get_dma_device(priv->dma_rx_chan);
 
@@ -135,8 +193,12 @@ static int ra_net_dma_rx_one(struct ra_net_priv *priv)
 	struct sk_buff *skb;
 	dma_cookie_t cookie;
 	dma_addr_t dma_addr;
+	unsigned long flags;
 	bool timestamped;
 	int ret;
+
+	if (READ_ONCE(priv->dma_rx_stopped))
+		return -ESHUTDOWN;
 
 	status = ra_net_ior(priv, RA_NET_RX_STATE);
 	pkt_len = status & RA_NET_RX_STATE_PACKET_LEN_MASK;
@@ -179,13 +241,21 @@ static int ra_net_dma_rx_one(struct ra_net_priv *priv)
 	ctx->dma_addr = dma_addr;
 	ctx->timestamped = timestamped;
 
+	/* Excludes ra_net_dma_stop(), see there */
+	spin_lock_irqsave(&priv->dma_lock, flags);
+
+	if (priv->dma_rx_stopped) {
+		ret = -ESHUTDOWN;
+		goto err_unlock;
+	}
+
 	tx = dmaengine_prep_dma_memcpy(priv->dma_rx_chan, dma_addr,
 				       priv->dma_addr, buf_len,
 				       DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
 	if (!tx) {
 		dev_err(priv->dev, "dmaengine_prep_dma_memcpy failed\n");
 		ret = -EIO;
-		goto err_free_ctx;
+		goto err_unlock;
 	}
 
 	tx->callback = ra_net_dma_rx_callback;
@@ -196,14 +266,20 @@ static int ra_net_dma_rx_one(struct ra_net_priv *priv)
 	ret = dma_submit_error(cookie);
 	if (ret) {
 		dev_err(priv->dev, "dma_submit_error %d\n", ret);
-		goto err_free_ctx;
+		goto err_unlock;
 	}
+
+	/* Before the transfer can complete, so the callback finds it */
+	WRITE_ONCE(priv->dma_rx_ctx, ctx);
 
 	dma_async_issue_pending(priv->dma_rx_chan);
 
+	spin_unlock_irqrestore(&priv->dma_lock, flags);
+
 	return 0;
 
-err_free_ctx:
+err_unlock:
+	spin_unlock_irqrestore(&priv->dma_lock, flags);
 	kfree(ctx);
 err_unmap:
 	dma_unmap_single(dma_dev, dma_addr, buf_len, DMA_FROM_DEVICE);
@@ -217,6 +293,8 @@ void ra_net_dma_rx(struct ra_net_priv *priv) {
 	int ret;
 
 	ret = ra_net_dma_rx_one(priv);
-	if (ret < 0)
+
+	/* Leave the interrupt alone while stopped, ra_net_irqs_enable() owns it */
+	if (ret < 0 && ret != -ESHUTDOWN)
 		ra_net_irq_enable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE);
 }

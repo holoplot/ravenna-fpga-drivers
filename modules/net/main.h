@@ -44,6 +44,8 @@ struct ra_net_tx_ts {
 	unsigned int ts_wr_idx;
 };
 
+struct ra_net_dma_rx_ctx;
+
 struct ra_net_priv {
 	void __iomem *regs;
 
@@ -59,6 +61,16 @@ struct ra_net_priv {
 
 	struct dma_chan		*dma_rx_chan;
 	dma_addr_t		dma_addr;
+
+	/*
+	 * dma_lock makes submitting a transfer and stopping the channel
+	 * mutually exclusive. dma_rx_ctx is the single transfer in flight,
+	 * owned by whoever of the completion callback and ra_net_dma_flush()
+	 * swaps it out first.
+	 */
+	spinlock_t		dma_lock;
+	bool			dma_rx_stopped;
+	struct ra_net_dma_rx_ctx *dma_rx_ctx;
 
 	bool tx_throttle;
 
@@ -152,6 +164,7 @@ void ra_net_rx_apply_timestamp(struct ra_net_priv *priv, struct sk_buff *skb,
 			       struct ptp_packet_fpga_timestamp *ts);
 
 int ra_net_dma_probe(struct ra_net_priv *priv);
+void ra_net_dma_start(struct ra_net_priv *priv);
 void ra_net_dma_flush(struct ra_net_priv *priv);
 void ra_net_dma_rx(struct ra_net_priv *priv);
 

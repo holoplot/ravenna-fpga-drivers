@@ -169,10 +169,11 @@ static void ra_net_reset(struct ra_net_priv *priv)
 	ra_net_irq_disable(priv, ~0);
 	ra_net_pp_irq_disable(priv, ~0);
 
+	/* Stop the DMA first, so it does not race with draining the FIFO */
+	ra_net_dma_flush(priv);
+
 	ra_net_flush_rx_fifo(priv);
 	ra_net_flush_tx_ts(priv);
-
-	ra_net_dma_flush(priv);
 
 	priv->tx_throttle = false;
 }
@@ -180,6 +181,8 @@ static void ra_net_reset(struct ra_net_priv *priv)
 /* ra_net_reset() masks every interrupt, so this has to follow it */
 static void ra_net_irqs_enable(struct ra_net_priv *priv)
 {
+	ra_net_dma_start(priv);
+
 	ra_net_irq_enable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE |
 				RA_NET_IRQ_RX_OVERRUN);
 
@@ -593,6 +596,7 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 
 	spin_lock_init(&priv->lock);
 	spin_lock_init(&priv->reg_lock);
+	spin_lock_init(&priv->dma_lock);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->regs = devm_ioremap_resource(dev, res);
