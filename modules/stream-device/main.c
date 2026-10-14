@@ -229,6 +229,11 @@ static struct platform_driver ra_sd_driver =
 	.driver = {
 		.name = "ravenna-stream-device",
 		.of_match_table = ra_sd_of_ids,
+		/*
+		 * Open files keep using the driver data, and misc_deregister()
+		 * does not wait for them, so don't allow unbinding from sysfs.
+		 */
+		.suppress_bind_attrs = true,
 	},
 };
 module_platform_driver(ra_sd_driver);

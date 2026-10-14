@@ -224,6 +224,11 @@ static struct platform_driver ra_sync_driver =
 	.driver = {
 		.name = "ravenna-sync",
 		.of_match_table = ra_sync_of_ids,
+		/*
+		 * Open files keep using the driver data, and misc_deregister()
+		 * does not wait for them, so don't allow unbinding from sysfs.
+		 */
+		.suppress_bind_attrs = true,
 	},
 };
 module_platform_driver(ra_sync_driver);
