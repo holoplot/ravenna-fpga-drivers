@@ -462,11 +462,9 @@ static struct attribute *ra_ptp_attrs[] = {
 	NULL
 };
 
-static const struct attribute_group ra_ptp_attr_group = {
-	.name = "ravenna_ptp",
+static const struct attribute_group ra_ptp_group = {
 	.attrs = ra_ptp_attrs,
 };
-ATTRIBUTE_GROUPS(ra_ptp);
 
 /* platform */
 
@@ -504,7 +502,7 @@ static int ra_ptp_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	ret = device_add_groups(dev, ra_ptp_groups);
+	ret = devm_device_add_group(dev, &ra_ptp_group);
 	if (ret < 0)
 		return ret;
 
