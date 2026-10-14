@@ -98,10 +98,12 @@ static int ra_sync_probe(struct platform_device *pdev)
 		struct ptp_clock *ptp_clock;
 
 		ptp_dev = of_find_device_by_node(ptp_node);
+		of_node_put(ptp_node);
 		if (!ptp_dev)
 			return -EPROBE_DEFER;
 
 		ptp_clock = platform_get_drvdata(ptp_dev);
+		put_device(&ptp_dev->dev);
 		if (!ptp_clock)
 			return -EPROBE_DEFER;
 	}

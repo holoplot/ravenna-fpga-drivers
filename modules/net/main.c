@@ -580,14 +580,18 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 		struct platform_device *ptp_dev;
 
 		ptp_dev = of_find_device_by_node(ptp_node);
+		of_node_put(ptp_node);
 		if (!ptp_dev)
 			return -EPROBE_DEFER;
 
 		ptp_clock = platform_get_drvdata(ptp_dev);
-		if (!ptp_clock)
+		if (!ptp_clock) {
+			put_device(&ptp_dev->dev);
 			return -EPROBE_DEFER;
+		}
 
 		priv->phc_index = ptp_clock_index(ptp_clock);
+		put_device(&ptp_dev->dev);
 	}
 
 	if (priv->phc_index < 0)
