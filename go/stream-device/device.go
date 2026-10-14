@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io/fs"
 	"os"
 	"unsafe"
 )
@@ -25,7 +24,7 @@ func Open(path string) (*Device, error) {
 
 	var err error
 
-	if d.f, err = os.OpenFile(path, 0, fs.FileMode(os.O_RDWR)); err != nil {
+	if d.f, err = os.OpenFile(path, os.O_RDWR, 0); err != nil {
 		return nil, err
 	}
 
