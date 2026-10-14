@@ -19,8 +19,17 @@
 static irqreturn_t ra_sync_irqhandler(int irq, void *devid)
 {
 	struct ra_sync_priv *priv = devid;
+	u32 stat0, stat1;
 
-	return IRQ_HANDLED;
+	/*
+	 * The line is shared, so only claim the interrupt if the device has
+	 * one pending. regmap's MMIO accessors are safe in hard IRQ context.
+	 */
+	if (regmap_read(priv->regmap, RA_SYNC_IRQ_STAT0, &stat0) ||
+	    regmap_read(priv->regmap, RA_SYNC_IRQ_STAT1, &stat1))
+		return IRQ_NONE;
+
+	return (stat0 || stat1) ? IRQ_HANDLED : IRQ_NONE;
 }
 
 static int ra_sync_set_frequency_ioctl(struct ra_sync_priv *priv,
