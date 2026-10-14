@@ -14,6 +14,7 @@
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/ptp_clock_kernel.h>
+#include <linux/rtnetlink.h>
 #include <linux/skbuff.h>
 #include <linux/spinlock.h>
 
@@ -176,6 +177,16 @@ static void ra_net_reset(struct ra_net_priv *priv)
 	priv->tx_throttle = false;
 }
 
+/* ra_net_reset() masks every interrupt, so this has to follow it */
+static void ra_net_irqs_enable(struct ra_net_priv *priv)
+{
+	ra_net_irq_enable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE |
+				RA_NET_IRQ_RX_OVERRUN);
+
+	if (priv->tx_ts.enable || priv->rx_ts_enable)
+		ra_net_pp_irq_enable(priv, RA_NET_PP_IRQ_PTP_TX_TS_IRQ_AVAILABLE);
+}
+
 static void ra_net_write_mac_addr(struct net_device *ndev)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
@@ -211,8 +222,7 @@ static int ra_net_open(struct net_device *ndev)
 
 	napi_enable(&priv->napi);
 
-	ra_net_irq_enable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE |
-				RA_NET_IRQ_RX_OVERRUN);
+	ra_net_irqs_enable(priv);
 
 	netif_start_queue(ndev);
 
@@ -381,15 +391,50 @@ static netdev_tx_t ra_net_start_xmit(struct sk_buff *skb, struct net_device *nde
 	return NETDEV_TX_OK;
 }
 
+static void ra_net_reset_work(struct work_struct *work)
+{
+	struct ra_net_priv *priv =
+		container_of(work, struct ra_net_priv, reset_work);
+	struct net_device *ndev = priv->ndev;
+
+	/*
+	 * rtnl serializes against open and stop. With it held, a running
+	 * device has its NAPI instance enabled, which napi_disable() below
+	 * requires.
+	 */
+	rtnl_lock();
+
+	if (netif_running(ndev)) {
+		netif_tx_disable(ndev);
+		napi_disable(&priv->napi);
+
+		ra_net_reset(priv);
+
+		napi_enable(&priv->napi);
+		ra_net_irqs_enable(priv);
+
+		netif_trans_update(ndev);
+		netif_wake_queue(ndev);
+	}
+
+	rtnl_unlock();
+}
+
 static void ra_net_tx_timeout(struct net_device *ndev, unsigned int txqueue)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
 
 	dev_warn(priv->dev, "timeout! txqueue = %d\n", txqueue);
 
-	ra_net_reset(priv);
-	netif_trans_update(ndev);
-	netif_wake_queue(ndev);
+	/* Called from the watchdog timer: the reset can sleep, so defer it */
+	schedule_work(&priv->reset_work);
+}
+
+static void ra_net_cancel_reset_work(void *data)
+{
+	struct ra_net_priv *priv = data;
+
+	cancel_work_sync(&priv->reset_work);
 }
 
 static void ra_net_set_rx_mode(struct net_device *ndev)
@@ -608,6 +653,7 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 		dev_err(dev, "Unable to obtain PTP clock");
 
 	ra_net_tx_ts_init(priv);
+	INIT_WORK(&priv->reset_work, ra_net_reset_work);
 
 	ndev->irq = irq;
 	ndev->netdev_ops = &ra_net_netdev_ops;
@@ -676,6 +722,14 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 	ndev->watchdog_timeo = msecs_to_jiffies(tmp);
 
 	priv->rx_dropped_packets_at_probe = ra_net_ior(priv, RA_NET_RX_PACKET_DROPPED_CNT);
+
+	/*
+	 * Registered right before the netdev, so it runs right after the
+	 * netdev is unregistered and before anything the work uses goes away.
+	 */
+	ret = devm_add_action_or_reset(dev, ra_net_cancel_reset_work, priv);
+	if (ret < 0)
+		return ret;
 
 	ret = devm_register_netdev(dev, ndev);
 	if (ret < 0) {

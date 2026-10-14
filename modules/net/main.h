@@ -64,6 +64,8 @@ struct ra_net_priv {
 
 	int phc_index;
 
+	struct work_struct	reset_work;
+
 	struct ra_net_tx_ts tx_ts;
 	bool rx_ts_enable;
 
