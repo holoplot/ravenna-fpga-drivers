@@ -147,14 +147,6 @@ static int ra_sync_probe(struct platform_device *pdev)
 	priv->misc.fops = &ra_sync_fops;
 	priv->misc.name = name;
 
-	ret = misc_register(&priv->misc);
-	if (ret < 0)
-		return ret;
-
-	ret = devm_add_action_or_reset(dev, ra_sync_misc_deregister, &priv->misc);
-	if (ret < 0)
-		return ret;
-
 	priv->mclk = devm_clk_get(dev, "mclk");
 	if (IS_ERR(priv->mclk)) {
 		ret = PTR_ERR(priv->mclk);
@@ -179,6 +171,19 @@ static int ra_sync_probe(struct platform_device *pdev)
 		return ret;
 
 	platform_set_drvdata(pdev, priv);
+
+	/*
+	 * Register the device node last. The ioctl handler uses priv->mclk, so
+	 * it must not be reachable before the clock is set up, or after a
+	 * failed probe left an error pointer in there.
+	 */
+	ret = misc_register(&priv->misc);
+	if (ret < 0)
+		return ret;
+
+	ret = devm_add_action_or_reset(dev, ra_sync_misc_deregister, &priv->misc);
+	if (ret < 0)
+		return ret;
 
 	dev_info(&pdev->dev, "Ravenna sync '%s', minor %d",
 		 priv->misc.name, priv->misc.minor);
