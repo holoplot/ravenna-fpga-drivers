@@ -71,13 +71,13 @@ static void ra_ptp_cmd(struct ra_ptp_priv *priv, u32 cmd)
 	ra_ptp_iow(priv, RA_PTP_CMD, cmd);
 }
 
-static int ra_ptp_set_per_out(struct ra_ptp_priv *priv, int ns)
+static int ra_ptp_set_per_out(struct ra_ptp_priv *priv, u32 ns)
 {
 	struct device *dev = priv->dev;
 	unsigned long flags;
 
 	if (ns > RA_EVENT_OUT_MAX_PERIOD) {
-		dev_err(dev, "Invalid interval for periodic output: %d\n", ns);
+		dev_err(dev, "Invalid interval for periodic output: %u\n", ns);
 		return -EINVAL;
 	}
 
@@ -91,7 +91,7 @@ static int ra_ptp_set_per_out(struct ra_ptp_priv *priv, int ns)
 			   RA_PTP_EVENT_OUT_MODE_PERIODIC |
 			   RA_PTP_EVENT_OUT_MODE_ENABLE);
 
-		dev_info(dev, "Periodic output activated with interval of %d ns\n", ns);
+		dev_info(dev, "Periodic output activated with interval of %u ns\n", ns);
 	} else {
 		dev_info(dev, "Periodic output deactivated\n");
 	}
@@ -259,7 +259,7 @@ static int ra_ptp_enable(struct ptp_clock_info *ptp,
 {
 	struct ra_ptp_priv *priv = to_ra_ptp_priv(ptp);
 	struct device *dev = priv->dev;
-	unsigned int ns = 0;
+	u32 ns = 0;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
@@ -289,9 +289,18 @@ static int ra_ptp_enable(struct ptp_clock_info *ptp,
 			return -EINVAL;
 		}
 
-		if (on)
+		if (on) {
+			/*
+			 * Range-check before converting, as the period comes
+			 * from userspace and must not wrap when truncated.
+			 */
+			if (rq->perout.period.sec < 0 ||
+			    rq->perout.period.sec > RA_EVENT_OUT_MAX_PERIOD / NSEC_PER_SEC)
+				return -EINVAL;
+
 			ns = rq->perout.period.sec * NSEC_PER_SEC +
 			     rq->perout.period.nsec;
+		}
 
 		return ra_ptp_set_per_out(priv, ns);
 
