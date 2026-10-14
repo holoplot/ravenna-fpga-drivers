@@ -13,6 +13,23 @@ import (
 	rsd "github.com/holoplot/ravenna-fpga-drivers/go/stream-device"
 )
 
+// parseIP parses an address given on the command line. An empty value means
+// the address is not used. An invalid one is fatal rather than silently
+// turning into "not used".
+func parseIP(flagName, value string) net.IP {
+	if value == "" {
+		return nil
+	}
+
+	ip := net.ParseIP(value)
+	if ip == nil {
+		slog.Error("Invalid IP address", "flag", flagName, "value", value)
+		os.Exit(1)
+	}
+
+	return ip
+}
+
 func main() {
 	deviceFileFlag := flag.String("dev", "/dev/ravenna-stream-device", "Device file to use")
 	channelsFlag := flag.Int("channels", 2, "Number of channels to send")
@@ -75,8 +92,8 @@ func main() {
 	}
 
 	if len(*primaryDestinationIpFlag) > 0 || len(*primarySourceIpFlag) > 0 {
-		txDesc.Primary.Destination.IP = net.ParseIP(*primaryDestinationIpFlag)
-		txDesc.Primary.Source.IP = net.ParseIP(*primarySourceIpFlag)
+		txDesc.Primary.Destination.IP = parseIP("pri-dst-ip", *primaryDestinationIpFlag)
+		txDesc.Primary.Source.IP = parseIP("pri-src-ip", *primarySourceIpFlag)
 		txDesc.Primary.Destination.Port = *primaryDestinationPortFlag
 		txDesc.Primary.Source.Port = *primarySourcePortFlag
 		txDesc.Primary.VlanTag = uint16(*primaryVlanTagFlag)
@@ -84,8 +101,8 @@ func main() {
 	}
 
 	if len(*secondaryDestinationIpFlag) > 0 || len(*secondarySourceIpFlag) > 0 {
-		txDesc.Secondary.Destination.IP = net.ParseIP(*secondaryDestinationIpFlag)
-		txDesc.Secondary.Source.IP = net.ParseIP(*secondarySourceIpFlag)
+		txDesc.Secondary.Destination.IP = parseIP("sec-dst-ip", *secondaryDestinationIpFlag)
+		txDesc.Secondary.Source.IP = parseIP("sec-src-ip", *secondarySourceIpFlag)
 		txDesc.Secondary.Destination.Port = *secondaryDestinationPortFlag
 		txDesc.Secondary.Source.Port = *secondarySourcePortFlag
 		txDesc.Secondary.VlanTag = uint16(*secondaryVlanTagFlag)

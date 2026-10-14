@@ -14,6 +14,23 @@ import (
 	rsd "github.com/holoplot/ravenna-fpga-drivers/go/stream-device"
 )
 
+// parseIP parses an address given on the command line. An empty value means
+// the address is not used. An invalid one is fatal rather than silently
+// turning into "not used".
+func parseIP(flagName, value string) net.IP {
+	if value == "" {
+		return nil
+	}
+
+	ip := net.ParseIP(value)
+	if ip == nil {
+		slog.Error("Invalid IP address", "flag", flagName, "value", value)
+		os.Exit(1)
+	}
+
+	return ip
+}
+
 func main() {
 	deviceFileFlag := flag.String("dev", "/dev/ravenna-stream-device", "Device file to use")
 	channelsFlag := flag.Int("channels", 2, "Number of channels to receive")
@@ -104,7 +121,7 @@ func main() {
 
 	if len(*primaryIpFlag) > 0 {
 		rxDesc.PrimaryDestination = net.UDPAddr{
-			IP:   net.ParseIP(*primaryIpFlag),
+			IP:   parseIP("pri-ip", *primaryIpFlag),
 			Port: *primaryPortFlag,
 		}
 
@@ -113,7 +130,7 @@ func main() {
 
 	if len(*secondaryIpFlag) > 0 {
 		rxDesc.SecondaryDestination = net.UDPAddr{
-			IP:   net.ParseIP(*secondaryIpFlag),
+			IP:   parseIP("sec-ip", *secondaryIpFlag),
 			Port: *secondaryPortFlag,
 		}
 

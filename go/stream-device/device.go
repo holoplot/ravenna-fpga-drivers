@@ -77,9 +77,14 @@ func (d *Device) readInfo() error {
 }
 
 func (d *Device) AddRxStream(sd RxStreamDescription) (*RxStream, error) {
+	s, err := sd.toIoctlStruct()
+	if err != nil {
+		return nil, err
+	}
+
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, uint32(0)) // version
-	buf.Write(sd.toIoctlStruct())
+	buf.Write(s)
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
@@ -98,10 +103,15 @@ func (d *Device) AddRxStream(sd RxStreamDescription) (*RxStream, error) {
 }
 
 func (d *Device) updateRxStream(rx *RxStream, sd RxStreamDescription) error {
+	s, err := sd.toIoctlStruct()
+	if err != nil {
+		return err
+	}
+
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, uint32(0)) // version
 	binary.Write(buf, binary.LittleEndian, uint32(rx.index))
-	buf.Write(sd.toIoctlStruct())
+	buf.Write(s)
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
@@ -121,9 +131,14 @@ func (d *Device) deleteRxStream(rx *RxStream) error {
 }
 
 func (d *Device) AddTxStream(sd TxStreamDescription) (*TxStream, error) {
+	s, err := sd.toIoctlStruct()
+	if err != nil {
+		return nil, err
+	}
+
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, uint32(0)) // version
-	buf.Write(sd.toIoctlStruct())
+	buf.Write(s)
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 
@@ -142,10 +157,15 @@ func (d *Device) AddTxStream(sd TxStreamDescription) (*TxStream, error) {
 }
 
 func (d *Device) updateTxStream(tx *TxStream, sd TxStreamDescription) error {
+	s, err := sd.toIoctlStruct()
+	if err != nil {
+		return err
+	}
+
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, uint32(0)) // version
 	binary.Write(buf, binary.LittleEndian, uint32(tx.index))
-	buf.Write(sd.toIoctlStruct())
+	buf.Write(s)
 	b := buf.Bytes()
 	p := unsafe.Pointer(&b[0])
 

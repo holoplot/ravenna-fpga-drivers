@@ -3,6 +3,7 @@ package ravenna_stream_device
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"net"
 	"time"
 	"unsafe"
@@ -49,22 +50,49 @@ type TxStreamDescription struct {
 	Tracks [MaxChannels]int16
 }
 
-func (sd *TxStreamDescription) toIoctlStruct() []byte {
+func (ni *TxStreamDescriptionNetworkInterface) toIoctlStruct() ([]byte, error) {
+	dstIP, dstPort, err := udpAddrToBytes(ni.Destination)
+	if err != nil {
+		return nil, fmt.Errorf("destination: %w", err)
+	}
+
+	srcIP, srcPort, err := udpAddrToBytes(ni.Source)
+	if err != nil {
+		return nil, fmt.Errorf("source: %w", err)
+	}
+
+	mac, err := macToBytes(ni.DestinationMAC)
+	if err != nil {
+		return nil, fmt.Errorf("destination MAC: %w", err)
+	}
+
 	buf := new(bytes.Buffer)
 
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Primary.Destination.IP))
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Primary.Source.IP))
-	binary.Write(buf, binary.BigEndian, uint16(sd.Primary.Destination.Port))
-	binary.Write(buf, binary.BigEndian, uint16(sd.Primary.Source.Port))
-	binary.Write(buf, binary.BigEndian, sd.Primary.VlanTag)
-	binary.Write(buf, binary.BigEndian, macToBytes(sd.Primary.DestinationMAC))
+	binary.Write(buf, binary.BigEndian, dstIP)
+	binary.Write(buf, binary.BigEndian, srcIP)
+	binary.Write(buf, binary.BigEndian, dstPort)
+	binary.Write(buf, binary.BigEndian, srcPort)
+	binary.Write(buf, binary.BigEndian, ni.VlanTag)
+	binary.Write(buf, binary.BigEndian, mac)
 
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Secondary.Destination.IP))
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.Secondary.Source.IP))
-	binary.Write(buf, binary.BigEndian, uint16(sd.Secondary.Destination.Port))
-	binary.Write(buf, binary.BigEndian, uint16(sd.Secondary.Source.Port))
-	binary.Write(buf, binary.BigEndian, sd.Secondary.VlanTag)
-	binary.Write(buf, binary.BigEndian, macToBytes(sd.Secondary.DestinationMAC))
+	return buf.Bytes(), nil
+}
+
+func (sd *TxStreamDescription) toIoctlStruct() ([]byte, error) {
+	pri, err := sd.Primary.toIoctlStruct()
+	if err != nil {
+		return nil, fmt.Errorf("primary: %w", err)
+	}
+
+	sec, err := sd.Secondary.toIoctlStruct()
+	if err != nil {
+		return nil, fmt.Errorf("secondary: %w", err)
+	}
+
+	buf := new(bytes.Buffer)
+
+	buf.Write(pri)
+	buf.Write(sec)
 
 	binary.Write(buf, binary.LittleEndian, sd.VlanTagged)
 	binary.Write(buf, binary.LittleEndian, sd.Multicast)
@@ -90,7 +118,7 @@ func (sd *TxStreamDescription) toIoctlStruct() []byte {
 
 	binary.Write(buf, binary.LittleEndian, sd.Tracks)
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
 func (tx *TxStream) Index() int {

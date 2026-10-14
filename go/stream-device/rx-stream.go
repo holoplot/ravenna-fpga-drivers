@@ -3,6 +3,7 @@ package ravenna_stream_device
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"net"
 	"time"
 	"unsafe"
@@ -40,15 +41,25 @@ type RxStreamDescription struct {
 	Tracks [MaxChannels]int16
 }
 
-func (sd *RxStreamDescription) toIoctlStruct() []byte {
+func (sd *RxStreamDescription) toIoctlStruct() ([]byte, error) {
+	priIP, priPort, err := udpAddrToBytes(sd.PrimaryDestination)
+	if err != nil {
+		return nil, fmt.Errorf("primary destination: %w", err)
+	}
+
+	secIP, secPort, err := udpAddrToBytes(sd.SecondaryDestination)
+	if err != nil {
+		return nil, fmt.Errorf("secondary destination: %w", err)
+	}
+
 	buf := new(bytes.Buffer)
 
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.PrimaryDestination.IP))
-	binary.Write(buf, binary.BigEndian, uint16(sd.PrimaryDestination.Port))
+	binary.Write(buf, binary.BigEndian, priIP)
+	binary.Write(buf, binary.BigEndian, priPort)
 	binary.Write(buf, binary.LittleEndian, [2]uint8{0}) // padding
 
-	binary.Write(buf, binary.BigEndian, ipToBytes(sd.SecondaryDestination.IP))
-	binary.Write(buf, binary.BigEndian, uint16(sd.SecondaryDestination.Port))
+	binary.Write(buf, binary.BigEndian, secIP)
+	binary.Write(buf, binary.BigEndian, secPort)
 	binary.Write(buf, binary.LittleEndian, [2]uint8{0}) // padding
 
 	binary.Write(buf, binary.LittleEndian, sd.SyncSource)
@@ -74,7 +85,7 @@ func (sd *RxStreamDescription) toIoctlStruct() []byte {
 
 	binary.Write(buf, binary.LittleEndian, [2]uint8{0})
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
 func (rx *RxStream) Index() int {
