@@ -1,7 +1,6 @@
 package ravenna_stream_device
 
 import (
-	"errors"
 	"fmt"
 	"syscall"
 	"unsafe"
@@ -16,7 +15,7 @@ const (
 func doIoctlWithRet(fd uintptr, code uint32, ptr unsafe.Pointer) (int, error) {
 	ret, _, errno := syscall.Syscall(syscall.SYS_IOCTL, fd, uintptr(code), uintptr(ptr))
 	if errno != 0 {
-		return 0, errors.New(errno.Error())
+		return 0, errno
 	}
 
 	return int(ret), nil
