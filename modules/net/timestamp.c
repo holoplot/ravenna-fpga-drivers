@@ -119,7 +119,8 @@ static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 		return;
 	}
 
-	if (ts->sequence_id < packet_seq_id) {
+	/* The sequence id wraps, compare the distance rather than the values */
+	if ((s16)(ts->sequence_id - packet_seq_id) < 0) {
 		/* timestamp without packet ! => remove from list */
 		net_err_ratelimited("%s: timestamp sequence id (0x%04X) < packet sequence id (0x%04X), discarding timestamp\n",
 			priv->ndev->name, ts->sequence_id, packet_seq_id);
