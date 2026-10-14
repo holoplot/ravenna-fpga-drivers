@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#define DEBUG 1
-
 #include <linux/of.h>
 
 #include "main.h"
@@ -376,7 +374,7 @@ int ra_sd_tx_probe(struct ra_sd_tx *tx, struct device *dev)
 	if (ret < 0)
 		return ret;
 
-	dev_info(dev, "RX track table, %d entries", tx->trtb.max_entries);
+	dev_info(dev, "TX track table, %d entries", tx->trtb.max_entries);
 
 	xa_init_flags(&tx->streams, XA_FLAGS_ALLOC);
 

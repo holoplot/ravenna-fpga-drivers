@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#define DEBUG 1
-
 #include <linux/of.h>
 
 #include "main.h"
