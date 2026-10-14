@@ -30,6 +30,19 @@ static u32 ra_net_rx_fifo_len(u32 pkt_len)
 	return ALIGN(pkt_len + RA_NET_RX_PADDING_BYTES, sizeof(u32));
 }
 
+/* Discard the packet at the head of the RX FIFO, as described by status */
+static void ra_net_rx_fifo_skip(struct ra_net_priv *priv, u32 status)
+{
+	u32 pkt_len = status & RA_NET_RX_STATE_PACKET_LEN_MASK;
+	u32 words = ra_net_rx_fifo_len(pkt_len) / sizeof(u32);
+
+	if (status & RA_NET_RX_STATE_PACKET_HAS_PTP_TS)
+		words += sizeof(struct ptp_packet_fpga_timestamp) / sizeof(u32);
+
+	while (words--)
+		ra_net_ior(priv, RA_NET_RX_FIFO);
+}
+
 static int ra_net_napi_poll(struct napi_struct *napi, int budget)
 {
 	struct ra_net_priv *priv = container_of(napi, struct ra_net_priv, napi);
@@ -46,6 +59,13 @@ static int ra_net_napi_poll(struct napi_struct *napi, int budget)
 			break;
 
 		dev_dbg(priv->dev, "%s() pkt_len %d\n", __func__, pkt_len);
+
+		/* Too short for eth_type_trans(), but it must still be consumed */
+		if (unlikely(pkt_len < ETH_HLEN)) {
+			ra_net_rx_fifo_skip(priv, status);
+			priv->ndev->stats.rx_length_errors++;
+			continue;
+		}
 
 		skb = napi_alloc_skb(&priv->napi, pkt_len_padded+4);
 		if (unlikely(!skb)) {
@@ -172,19 +192,11 @@ static void ra_net_flush_rx_fifo(struct ra_net_priv *priv)
 
 	for (i = 0; i < RA_NET_RX_FLUSH_MAX_PACKETS; i++) {
 		u32 status = ra_net_ior(priv, RA_NET_RX_STATE);
-		u32 pkt_len = status & RA_NET_RX_STATE_PACKET_LEN_MASK;
-		u32 words;
 
-		if (pkt_len == 0)
+		if ((status & RA_NET_RX_STATE_PACKET_LEN_MASK) == 0)
 			break;
 
-		words = ra_net_rx_fifo_len(pkt_len) / sizeof(u32);
-
-		if (status & RA_NET_RX_STATE_PACKET_HAS_PTP_TS)
-			words += sizeof(struct ptp_packet_fpga_timestamp) / sizeof(u32);
-
-		while (words--)
-			ra_net_ior(priv, RA_NET_RX_FIFO);
+		ra_net_rx_fifo_skip(priv, status);
 	}
 }
 
