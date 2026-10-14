@@ -255,7 +255,7 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	bool free_skb = true;
 	struct device *dev = priv->dev;
 	unsigned int len = skb->len;
-	unsigned int aligned_len;
+	unsigned int aligned_len, tail_needed;
 	int ret = 0;
 	u32 free;
 	u8 *buf, *tmp_buf = NULL;
@@ -274,6 +274,9 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	/* Adjust length and round to 32bit for FPGA access */
 	aligned_len = ALIGN(len + RA_NET_TX_PADDING_BYTES, sizeof(u32));
 
+	/* How far the FPGA access reaches past the end of the data */
+	tail_needed = aligned_len - RA_NET_TX_PADDING_BYTES - skb->len;
+
 	/*
 	 * We have to copy data to a local buffer if one of the following
 	 * conditions applies to the provided sk_buff:
@@ -284,14 +287,17 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 	 *   they are, so they must be zero rather than whatever the tailroom
 	 *   holds. Zeroing them in place is not an option, as the tailroom of
 	 *   a cloned skb may belong to another user of the buffer.
+	 * - the access, which is rounded up to 32 bit, would reach past the end
+	 *   of the buffer.
 	 */
 	if ((skb_headroom(skb) < RA_NET_TX_PADDING_BYTES) ||
-	    skb->len < ETH_ZLEN) {
+	    skb->len < ETH_ZLEN ||
+	    skb_tailroom(skb) < tail_needed) {
 		net_dbg_ratelimited("%s: skb->data needs copy, because skb_headroom (%i < %i) "
-				    "is too small or the packet is short (%u)\n",
+				    "or skb_tailroom (%i < %u) is too small, or the packet is short (%u)\n",
 				    ndev->name,
 				    skb_headroom(skb), RA_NET_TX_PADDING_BYTES,
-				    skb->len);
+				    skb_tailroom(skb), tail_needed, skb->len);
 
 		tmp_buf = kzalloc(aligned_len, GFP_ATOMIC);
 		if (!tmp_buf) {
