@@ -20,6 +20,16 @@
 
 #include "main.h"
 
+/*
+ * Bytes a packet of pkt_len takes up in the RX FIFO: the FPGA inserts 2
+ * padding bytes in front and the FIFO is read in 32 bit words. A timestamp,
+ * if present, follows separately.
+ */
+static u32 ra_net_rx_fifo_len(u32 pkt_len)
+{
+	return ALIGN(pkt_len + RA_NET_RX_PADDING_BYTES, sizeof(u32));
+}
+
 static int ra_net_napi_poll(struct napi_struct *napi, int budget)
 {
 	struct ra_net_priv *priv = container_of(napi, struct ra_net_priv, napi);
@@ -30,8 +40,7 @@ static int ra_net_napi_poll(struct napi_struct *napi, int budget)
 
 		u32 status = ra_net_ior(priv, RA_NET_RX_STATE);
 		u32 pkt_len = status & RA_NET_RX_STATE_PACKET_LEN_MASK;
-		u32 pkt_len_padded = ALIGN(pkt_len + RA_NET_RX_PADDING_BYTES,
-					   sizeof(u32));
+		u32 pkt_len_padded = ra_net_rx_fifo_len(pkt_len);
 
 		if (pkt_len == 0)
 			break;
@@ -152,18 +161,23 @@ static int ra_net_init(struct net_device *ndev)
 	return 0;
 }
 
+/* Drain the RX FIFO, consuming each packet exactly as the receive path does */
 static void ra_net_flush_rx_fifo(struct ra_net_priv *priv)
 {
 	for (;;) {
 		u32 status = ra_net_ior(priv, RA_NET_RX_STATE);
 		u32 pkt_len = status & RA_NET_RX_STATE_PACKET_LEN_MASK;
-
-		pkt_len = DIV_ROUND_UP(pkt_len, sizeof(u32));
+		u32 words;
 
 		if (pkt_len == 0)
 			break;
 
-		while (pkt_len--)
+		words = ra_net_rx_fifo_len(pkt_len) / sizeof(u32);
+
+		if (status & RA_NET_RX_STATE_PACKET_HAS_PTP_TS)
+			words += sizeof(struct ptp_packet_fpga_timestamp) / sizeof(u32);
+
+		while (words--)
 			ra_net_ior(priv, RA_NET_RX_FIFO);
 	}
 }
