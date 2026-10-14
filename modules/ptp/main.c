@@ -551,9 +551,6 @@ static int ra_ptp_probe(struct platform_device *pdev)
 	if (ret < 0)
 		return ret;
 
-	/* The ethernet driver will access the PTP clock through the driver-data */
-	platform_set_drvdata(pdev, priv->ptp_clock);
-
 	irq = of_irq_get(node, 0);
 	if (irq <= 0)
 		return dev_err_probe(dev, irq ?: -ENXIO, "Failed to get IRQ\n");
@@ -571,6 +568,13 @@ static int ra_ptp_probe(struct platform_device *pdev)
 	of_property_read_u32(node, "lawo,periodic-output-interval-ns",
 			     &per_out_interval);
 	ra_ptp_set_per_out(priv, per_out_interval);
+
+	/*
+	 * The ethernet and sync drivers access the PTP clock through the
+	 * driver-data and take non-NULL as "probed", so set it last, when
+	 * nothing can fail anymore.
+	 */
+	platform_set_drvdata(pdev, priv->ptp_clock);
 
 	return 0;
 }
