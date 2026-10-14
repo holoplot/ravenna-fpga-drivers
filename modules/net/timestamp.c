@@ -80,11 +80,18 @@ static void ra_net_stamp_tx_skb(struct ra_net_priv *priv, struct sk_buff *skb,
 	u16 packet_seq_id;
 	u32 offset;
 
-	offset = ETH_HLEN + IPV4_HLEN(data) + UDP_HLEN;
-
 	*ts_consumed = false;
 	*skb_consumed = true;
 	*do_stamp = false;
+
+	/* IPV4_HLEN() reads the first byte of the IP header */
+	if (skb->len < OFF_IHL + 1) {
+		dev_dbg(dev, "packet too short for an IP header\n");
+		*ts_consumed = true;
+		return;
+	}
+
+	offset = ETH_HLEN + IPV4_HLEN(data) + UDP_HLEN;
 
 	/* assumptions:
 	 *  - PTP packets are PTPV2 IPV4
