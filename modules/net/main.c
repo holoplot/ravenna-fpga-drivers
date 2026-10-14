@@ -590,6 +590,13 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 			return -EPROBE_DEFER;
 		}
 
+		/* unbind us if the PTP clock goes away, so phc_index can't go stale */
+		if (!device_link_add(dev, &ptp_dev->dev,
+				     DL_FLAG_AUTOREMOVE_CONSUMER)) {
+			put_device(&ptp_dev->dev);
+			return -EINVAL;
+		}
+
 		priv->phc_index = ptp_clock_index(ptp_clock);
 		put_device(&ptp_dev->dev);
 	}
