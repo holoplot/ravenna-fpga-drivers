@@ -92,6 +92,7 @@ struct ra_sync_priv {
 	struct regmap		*regmap;
 	struct miscdevice	misc;
 	struct clk		*mclk;
+	bool			mclk_enabled;
 	struct dentry		*debugfs;
 	struct mutex		mutex;
 };

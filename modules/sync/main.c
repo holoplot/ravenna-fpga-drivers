@@ -68,9 +68,20 @@ static const struct file_operations ra_sync_fops =
 	.unlocked_ioctl	= &ra_sync_ioctl,
 };
 
-static void ra_sync_mclk_disable_unprepare(void *c)
+/*
+ * Both shutdown and the devm cleanup on unbind turn the clock off, and an
+ * unbind can follow a shutdown, so only disable it once. The two are
+ * serialized by the device lock.
+ */
+static void ra_sync_mclk_disable_unprepare(void *data)
 {
-	clk_disable_unprepare(c);
+	struct ra_sync_priv *priv = data;
+
+	if (!priv->mclk_enabled)
+		return;
+
+	clk_disable_unprepare(priv->mclk);
+	priv->mclk_enabled = false;
 }
 
 static void ra_sync_misc_deregister(void *misc)
@@ -162,7 +173,9 @@ static int ra_sync_probe(struct platform_device *pdev)
 	if (ret < 0)
 		return ret;
 
-	ret = devm_add_action_or_reset(dev, ra_sync_mclk_disable_unprepare, priv->mclk);
+	priv->mclk_enabled = true;
+
+	ret = devm_add_action_or_reset(dev, ra_sync_mclk_disable_unprepare, priv);
 	if (ret < 0)
 		return ret;
 
@@ -195,7 +208,7 @@ static void ra_sync_shutdown(struct platform_device *pdev)
 {
 	struct ra_sync_priv *priv = platform_get_drvdata(pdev);
 
-	clk_disable_unprepare(priv->mclk);
+	ra_sync_mclk_disable_unprepare(priv);
 }
 
 static const struct of_device_id ra_sync_of_ids[] = {
