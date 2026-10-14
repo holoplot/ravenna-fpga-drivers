@@ -15,6 +15,7 @@ struct ra_irq_priv {
 	void __iomem *regs;
 	struct device *dev;
 	struct irq_domain *domain;
+	int irq;
 	int width;
 	raw_spinlock_t lock;
 };
@@ -126,6 +127,18 @@ static void ra_irq_domain_remove(void *domain)
 	irq_domain_remove(domain);
 }
 
+static void ra_irq_chained_teardown(void *data)
+{
+	struct ra_irq_priv *priv = data;
+
+	/*
+	 * The parent interrupt outlives the driver, so quiesce the hardware and
+	 * remove the handler before priv and the domain go away.
+	 */
+	ra_irq_iow(priv, RA_IRQ_MASK_REG, ~0);
+	irq_set_chained_handler_and_data(priv->irq, NULL, NULL);
+}
+
 static int ra_irq_drv_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -167,14 +180,18 @@ static int ra_irq_drv_probe(struct platform_device *pdev)
 	if (!priv->domain)
 		return -ENOMEM;
 
-	ret = devm_add_action_or_reset(dev, ra_irq_domain_remove, priv);
+	ret = devm_add_action_or_reset(dev, ra_irq_domain_remove,
+				       priv->domain);
 	if (ret < 0)
 		return ret;
+
+	priv->irq = irq;
 
 	irq_set_irq_type(irq, IRQF_TRIGGER_HIGH);
 	irq_set_chained_handler_and_data(irq, ra_irq_irq_handler, priv);
 
-	return 0;
+	/* Registered after the domain, so this runs before it is removed */
+	return devm_add_action_or_reset(dev, ra_irq_chained_teardown, priv);
 }
 
 static struct platform_driver ravenna_irq_driver =
