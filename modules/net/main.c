@@ -66,13 +66,17 @@ static int ra_net_napi_poll(struct napi_struct *napi, int budget)
 		napi_gro_receive(&priv->napi, skb);
 	}
 
-	if (count < budget)
-		napi_complete_done(&priv->napi, count);
+	/*
+	 * Only unmask the interrupt once polling is really over. With the
+	 * budget used up, or if napi_complete_done() hands the instance back
+	 * to be polled again, the interrupt would only schedule NAPI which is
+	 * already scheduled.
+	 */
+	if (count < budget && napi_complete_done(&priv->napi, count))
+		ra_net_irq_enable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE);
 
 	if (netif_queue_stopped(priv->ndev))
 		netif_wake_queue(priv->ndev);
-
-	ra_net_irq_enable(priv, RA_NET_IRQ_RX_PACKET_AVAILABLE);
 
 	return count;
 }
