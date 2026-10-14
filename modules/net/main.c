@@ -252,7 +252,7 @@ static int ra_net_stop(struct net_device *ndev)
 static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 {
 	struct ra_net_priv *priv = netdev_priv(ndev);
-	bool free_skb = true, short_packet = false;
+	bool free_skb = true;
 	struct device *dev = priv->dev;
 	unsigned int len = skb->len;
 	unsigned int aligned_len;
@@ -268,31 +268,30 @@ static int ra_net_hw_xmit_skb(struct sk_buff *skb, struct net_device *ndev)
 		return -EINVAL;
 	}
 
-	if (skb->len < ETH_ZLEN) {
+	if (skb->len < ETH_ZLEN)
 		len = ETH_ZLEN;
-		short_packet = true;
-	}
 
 	/* Adjust length and round to 32bit for FPGA access */
 	aligned_len = ALIGN(len + RA_NET_TX_PADDING_BYTES, sizeof(u32));
 
 	/*
-	 * We have to copy data to a local buffer if one of the two conditions
-	 * aren't met for the provided sk_buff:
+	 * We have to copy data to a local buffer if one of the following
+	 * conditions applies to the provided sk_buff:
 	 * - it does not provide enough headroom to insert the padding bytes we
 	 *   need for FPGA internal reasons (2 Bytes for length insertion)
-	 * - since the packet "on the wire" must be at least ETH_ZLEN (60)
-	 *   Bytes long, there must be enough space after the data to ensure
-	 *   that we don't transmit data from outside (after) the buffer.
-	 *   The needed tailroom space is 60Bytes - data_length.
+	 * - it is shorter than ETH_ZLEN (60). The packet "on the wire" must be
+	 *   at least that long and the bytes after the data would be sent as
+	 *   they are, so they must be zero rather than whatever the tailroom
+	 *   holds. Zeroing them in place is not an option, as the tailroom of
+	 *   a cloned skb may belong to another user of the buffer.
 	 */
 	if ((skb_headroom(skb) < RA_NET_TX_PADDING_BYTES) ||
-	    (short_packet && (skb_tailroom(skb) < (ETH_ZLEN - skb->len)))) {
+	    skb->len < ETH_ZLEN) {
 		net_dbg_ratelimited("%s: skb->data needs copy, because skb_headroom (%i < %i) "
-				    "or skb_tailroom (%i < %i) is too small\n",
+				    "is too small or the packet is short (%u)\n",
 				    ndev->name,
 				    skb_headroom(skb), RA_NET_TX_PADDING_BYTES,
-				    skb_tailroom(skb), (ETH_ZLEN - skb->len));
+				    skb->len);
 
 		tmp_buf = kzalloc(aligned_len, GFP_ATOMIC);
 		if (!tmp_buf) {
