@@ -398,7 +398,10 @@ static void ra_ptp_pps_irq(struct ra_ptp_priv *priv)
 
 	dev_dbg(priv->dev, "%s()\n", __func__);
 
+	/* Other commands write their arguments first, don't cut in between */
+	spin_lock(&priv->lock);
 	ra_ptp_cmd(priv, RA_PTP_CMD_ACK_PPS_IRQ);
+	spin_unlock(&priv->lock);
 
 	/*
 	* Assuming that the PPS IRQ is directly related to the start
