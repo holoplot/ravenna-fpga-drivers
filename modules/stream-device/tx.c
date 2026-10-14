@@ -58,6 +58,15 @@ static int ra_sd_tx_validate_stream(struct ra_sd_tx *tx,
 	if (stream->dscp_tos >= 64)
 		return -EINVAL;
 
+	/*
+	 * Both are used to size the packet and index stream->tracks[], so they
+	 * must be sane before ra_sd_tx_stream_ip_length() is of any use.
+	 */
+	if (stream->num_channels == 0 ||
+	    stream->num_channels > RA_MAX_CHANNELS ||
+	    stream->num_samples == 0)
+		return -EINVAL;
+
 	if (stream->rtp_ssrc == 0)
 		return -EINVAL;
 
