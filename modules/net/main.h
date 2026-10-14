@@ -49,7 +49,6 @@ struct ra_net_priv {
 
 	spinlock_t lock;
 	spinlock_t reg_lock;
-	spinlock_t mdio_lock;
 
 	struct device	 	*dev;
 	struct net_device 	*ndev;

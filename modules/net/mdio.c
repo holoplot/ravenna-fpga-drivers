@@ -35,6 +35,10 @@ static inline void ra_net_mdio_write_ctrl(struct ra_net_priv *priv,
 	ra_net_iow(priv, RA_NET_MDIO_CTRL, val);
 }
 
+/*
+ * No locking needed here: the mdiobus core serializes all accesses with
+ * its own mutex, and the wait helper sleeps.
+ */
 static int ra_net_mdio_read(struct mii_bus *mii, int phy_id, int regnum)
 {
 	struct ra_net_priv *priv = mii->priv;
@@ -44,15 +48,11 @@ static int ra_net_mdio_read(struct mii_bus *mii, int phy_id, int regnum)
 	if (ret < 0)
 		return ret;
 
-	spin_lock(&priv->mdio_lock);
-
 	ra_net_mdio_write_ctrl(priv, phy_id, regnum, false);
 
 	ret = ra_net_mdio_wait_ready(priv);
 	if (ret == 0)
 		ret = ra_net_ior(priv, RA_NET_MDIO_DATA);
-
-	spin_unlock(&priv->mdio_lock);
 
 	return ret;
 }
@@ -67,16 +67,10 @@ static int ra_net_mdio_write(struct mii_bus *mii, int phy_id,
 	if (ret < 0)
 		return ret;
 
-	spin_lock(&priv->mdio_lock);
-
 	ra_net_iow(priv, RA_NET_MDIO_DATA, data);
 	ra_net_mdio_write_ctrl(priv, phy_id, regnum, true);
 
-	ret = ra_net_mdio_wait_ready(priv);
-
-	spin_unlock(&priv->mdio_lock);
-
-	return ret;
+	return ra_net_mdio_wait_ready(priv);
 }
 
 int ra_net_mdio_init(struct ra_net_priv *priv)

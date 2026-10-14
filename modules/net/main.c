@@ -548,7 +548,6 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 
 	spin_lock_init(&priv->lock);
 	spin_lock_init(&priv->reg_lock);
-	spin_lock_init(&priv->mdio_lock);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->regs = devm_ioremap_resource(dev, res);
