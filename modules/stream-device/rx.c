@@ -349,10 +349,21 @@ int ra_sd_rx_delete_streams(struct ra_sd_rx *rx, struct file *filp)
 	return 0;
 }
 
-static void ra_sd_rx_destroy_streams(void *xa)
+static void ra_sd_rx_destroy_streams(void *data)
 {
-	BUG_ON(!xa_empty(xa));
-	xa_destroy(xa);
+	struct ra_sd_rx *rx = data;
+	struct ra_sd_rx_stream_elem *e;
+	unsigned long index;
+
+	/* Clients that still have the device open lose their streams */
+	mutex_lock(&rx->mutex);
+
+	xa_for_each(&rx->streams, index, e)
+		ra_sd_rx_free_stream(rx, e, index);
+
+	mutex_unlock(&rx->mutex);
+
+	xa_destroy(&rx->streams);
 }
 
 int ra_sd_rx_probe(struct ra_sd_rx *rx, struct device *dev)
@@ -388,15 +399,16 @@ int ra_sd_rx_probe(struct ra_sd_rx *rx, struct device *dev)
 
 	dev_info(dev, "RX track table, %d entries", rx->trtb.max_entries);
 
-	xa_init_flags(&rx->streams, XA_FLAGS_ALLOC);
-	ret = devm_add_action_or_reset(dev, ra_sd_rx_destroy_streams,
-				       &rx->streams);
-	if (ret < 0)
-		return ret;
-
+	/*
+	 * Must be allocated before the action below is registered, as that
+	 * runs ra_sd_rx_free_stream() which touches it and devm releases in
+	 * reverse order.
+	 */
 	rx->used_tracks = devm_bitmap_zalloc(dev, priv->max_tracks, GFP_KERNEL);
 	if (!rx->used_tracks)
 		return -ENOMEM;
 
-	return 0;
+	xa_init_flags(&rx->streams, XA_FLAGS_ALLOC);
+
+	return devm_add_action_or_reset(dev, ra_sd_rx_destroy_streams, rx);
 }

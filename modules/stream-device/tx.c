@@ -328,10 +328,21 @@ int ra_sd_tx_delete_streams(struct ra_sd_tx *tx, struct file *filp)
 	return 0;
 }
 
-static void ra_sd_tx_destroy_streams(void *xa)
+static void ra_sd_tx_destroy_streams(void *data)
 {
-	BUG_ON(!xa_empty(xa));
-	xa_destroy(xa);
+	struct ra_sd_tx *tx = data;
+	struct ra_sd_tx_stream_elem *e;
+	unsigned long index;
+
+	/* Clients that still have the device open lose their streams */
+	mutex_lock(&tx->mutex);
+
+	xa_for_each(&tx->streams, index, e)
+		ra_sd_tx_free_stream(tx, e, index);
+
+	mutex_unlock(&tx->mutex);
+
+	xa_destroy(&tx->streams);
 }
 
 int ra_sd_tx_probe(struct ra_sd_tx *tx, struct device *dev)
@@ -367,10 +378,6 @@ int ra_sd_tx_probe(struct ra_sd_tx *tx, struct device *dev)
 	dev_info(dev, "RX track table, %d entries", tx->trtb.max_entries);
 
 	xa_init_flags(&tx->streams, XA_FLAGS_ALLOC);
-	ret = devm_add_action_or_reset(dev, ra_sd_tx_destroy_streams,
-				       &tx->streams);
-	if (ret < 0)
-		return ret;
 
-	return 0;
+	return devm_add_action_or_reset(dev, ra_sd_tx_destroy_streams, tx);
 }

@@ -104,6 +104,7 @@ static int ra_sd_release(struct inode *inode, struct file *filp)
 
 static const struct file_operations ra_sd_fops =
 {
+	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= &ra_sd_ioctl,
 	.release	= &ra_sd_release,
 };

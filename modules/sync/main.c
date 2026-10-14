@@ -55,6 +55,7 @@ static long ra_sync_ioctl(struct file *filp,
 
 static const struct file_operations ra_sync_fops =
 {
+	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= &ra_sync_ioctl,
 };
 
