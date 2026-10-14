@@ -1,5 +1,7 @@
 package ravenna_stream_device
 
+import "fmt"
+
 const (
 	StreamCodecAM824 = 0
 	StreamCodecL32   = 1
@@ -20,7 +22,7 @@ func (c Codec) String() string {
 	case StreamCodecL16:
 		return "L16"
 	default:
-		panic("Unsupported Codec type")
+		return fmt.Sprintf("Codec(%d)", uint8(c))
 	}
 }
 
