@@ -67,7 +67,7 @@ static int ra_net_napi_poll(struct napi_struct *napi, int budget)
 			continue;
 		}
 
-		skb = napi_alloc_skb(&priv->napi, pkt_len_padded+4);
+		skb = netdev_alloc_skb(priv->ndev, pkt_len_padded+4);
 		if (unlikely(!skb)) {
 			priv->ndev->stats.rx_fifo_errors++;
 			break;
