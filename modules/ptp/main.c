@@ -19,6 +19,7 @@
 
 #define RA_EVENT_OUT_MAX_PERIOD		(1 * NSEC_PER_SEC)
 #define RA_PTP_ADJ_TIME_MAX_OFFSET	(1 * NSEC_PER_SEC)
+#define RA_PTP_IRQ_MAX_LOOPS		16
 #define RA_PTP_EXTTS_FLAGS		(PTP_ENABLE_FEATURE	| \
 					 PTP_RISING_EDGE	| \
 					 PTP_FALLING_EDGE	| \
@@ -346,6 +347,12 @@ static void ra_ptp_extts_irq(struct ra_ptp_priv *priv)
 				" => Event timestamp(s) may be lost or damaged\n");
 			ra_ptp_cmd(priv, RA_PTP_CMD_RESET_EXTTS_FIFO_OVFLW);
 		}
+
+		/*
+		 * Don't trust a count beyond the FIFO depth, we run with
+		 * interrupts off. Anything left over raises the interrupt again.
+		 */
+		ts_cnt = RA_PTP_EXTTS_MAX_TS_CNT;
 	}
 
 	while (ts_cnt--) {
@@ -428,10 +435,15 @@ static irqreturn_t ra_ptp_irqhandler(int irq, void *devid)
 {
 	struct ra_ptp_priv *priv = devid;
 	irqreturn_t ret = IRQ_NONE;
+	int loops;
 
 	dev_dbg(priv->dev, "%s()\n", __func__);
 
-	for (;;) {
+	/*
+	 * Bounded, so a status bit that does not clear can't lock up the CPU.
+	 * If something is still pending afterwards, the interrupt fires again.
+	 */
+	for (loops = 0; loops < RA_PTP_IRQ_MAX_LOOPS; loops++) {
 		u32 irqs = ra_ptp_ior(priv, RA_PTP_IRQS);
 		u32 mask = ra_ptp_ior(priv, RA_PTP_IRQ_DISABLE);
 
