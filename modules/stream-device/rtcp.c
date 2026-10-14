@@ -7,15 +7,29 @@
 
 void ra_sd_rtcp_rx_irq(struct ra_sd_priv *priv)
 {
-	ra_sd_read_rtcp_rx(priv, &priv->rtcp_rx.data);
+	struct ra_sd_rtcp_rx_data_fpga data;
+
+	ra_sd_read_rtcp_rx(priv, &data);
+
+	spin_lock(&priv->rtcp_rx.lock);
+	priv->rtcp_rx.data = data;
 	WRITE_ONCE(priv->rtcp_rx.ready, true);
+	spin_unlock(&priv->rtcp_rx.lock);
+
 	wake_up(&priv->rtcp_rx.wait);
 }
 
 void ra_sd_rtcp_tx_irq(struct ra_sd_priv *priv)
 {
-	ra_sd_read_rtcp_tx(priv, &priv->rtcp_tx.data);
+	struct ra_sd_rtcp_tx_data_fpga data;
+
+	ra_sd_read_rtcp_tx(priv, &data);
+
+	spin_lock(&priv->rtcp_tx.lock);
+	priv->rtcp_tx.data = data;
 	WRITE_ONCE(priv->rtcp_tx.ready, true);
+	spin_unlock(&priv->rtcp_tx.lock);
+
 	wake_up(&priv->rtcp_tx.wait);
 }
 
@@ -78,6 +92,8 @@ int ra_sd_read_rtcp_rx_stat_ioctl(struct ra_sd_priv *priv,
 				  void __user *buf)
 {
 	struct ra_sd_read_rtcp_rx_stat_cmd cmd;
+	struct ra_sd_rtcp_rx_data_fpga data;
+	unsigned int remaining_ms;
 	int ret;
 
 	if (size != sizeof(cmd))
@@ -89,13 +105,18 @@ int ra_sd_read_rtcp_rx_stat_ioctl(struct ra_sd_priv *priv,
 	if (cmd.index > 127)
 		return -EINVAL;
 
-	mutex_lock(&priv->rtcp_rx.mutex);
+	/* The wait below can be long, don't leave other callers uninterruptible */
+	if (mutex_lock_interruptible(&priv->rtcp_rx.mutex))
+		return -ERESTARTSYS;
 
+	spin_lock_irq(&priv->rtcp_rx.lock);
 	WRITE_ONCE(priv->rtcp_rx.ready, false);
+	spin_unlock_irq(&priv->rtcp_rx.lock);
+
 	ra_sd_iow(priv, RA_SD_RX_PAGE_SELECT, cmd.index);
 
 	ret = wait_event_interruptible_timeout(priv->rtcp_rx.wait,
-					       priv->rtcp_rx.ready,
+					       READ_ONCE(priv->rtcp_rx.ready),
 					       msecs_to_jiffies(cmd.timeout_ms));
 	if (ret == 0)
 		ret = -ETIMEDOUT;
@@ -103,11 +124,19 @@ int ra_sd_read_rtcp_rx_stat_ioctl(struct ra_sd_priv *priv,
 	if (ret < 0)
 		goto out_unlock;
 
-	/* Report elapsed time back to userspace */
-	cmd.timeout_ms -= jiffies_to_msecs(ret);
+	/*
+	 * Report elapsed time back to userspace. The timeout was rounded up
+	 * to jiffies, so the remainder can exceed what was asked for.
+	 */
+	remaining_ms = jiffies_to_msecs(ret);
+	cmd.timeout_ms -= min(cmd.timeout_ms, remaining_ms);
 	ret = 0;
 
-	ra_sd_parse_rtcp_rx_data(&priv->rtcp_rx.data, &cmd.data);
+	spin_lock_irq(&priv->rtcp_rx.lock);
+	data = priv->rtcp_rx.data;
+	spin_unlock_irq(&priv->rtcp_rx.lock);
+
+	ra_sd_parse_rtcp_rx_data(&data, &cmd.data);
 
 	if (copy_to_user(buf, &cmd, sizeof(cmd)))
 		ret = -EFAULT;
@@ -123,6 +152,8 @@ int ra_sd_read_rtcp_tx_stat_ioctl(struct ra_sd_priv *priv,
 				  void __user *buf)
 {
 	struct ra_sd_read_rtcp_tx_stat_cmd cmd;
+	struct ra_sd_rtcp_tx_data_fpga data;
+	unsigned int remaining_ms;
 	int ret;
 
 	if (size != sizeof(cmd))
@@ -134,13 +165,18 @@ int ra_sd_read_rtcp_tx_stat_ioctl(struct ra_sd_priv *priv,
 	if (cmd.index > 127)
 		return -EINVAL;
 
-	mutex_lock(&priv->rtcp_tx.mutex);
+	/* The wait below can be long, don't leave other callers uninterruptible */
+	if (mutex_lock_interruptible(&priv->rtcp_tx.mutex))
+		return -ERESTARTSYS;
 
+	spin_lock_irq(&priv->rtcp_tx.lock);
 	WRITE_ONCE(priv->rtcp_tx.ready, false);
+	spin_unlock_irq(&priv->rtcp_tx.lock);
+
 	ra_sd_iow(priv, RA_SD_TX_PAGE_SELECT, cmd.index);
 
 	ret = wait_event_interruptible_timeout(priv->rtcp_tx.wait,
-					       priv->rtcp_tx.ready,
+					       READ_ONCE(priv->rtcp_tx.ready),
 					       msecs_to_jiffies(cmd.timeout_ms));
 	if (ret == 0)
 		ret = -ETIMEDOUT;
@@ -148,11 +184,19 @@ int ra_sd_read_rtcp_tx_stat_ioctl(struct ra_sd_priv *priv,
 	if (ret < 0)
 		goto out_unlock;
 
-	/* Report elapsed time back to userspace */
-	cmd.timeout_ms -= jiffies_to_msecs(ret);
+	/*
+	 * Report elapsed time back to userspace. The timeout was rounded up
+	 * to jiffies, so the remainder can exceed what was asked for.
+	 */
+	remaining_ms = jiffies_to_msecs(ret);
+	cmd.timeout_ms -= min(cmd.timeout_ms, remaining_ms);
 	ret = 0;
 
-	ra_sd_parse_rtcp_tx_data(&priv->rtcp_tx.data, &cmd.data);
+	spin_lock_irq(&priv->rtcp_tx.lock);
+	data = priv->rtcp_tx.data;
+	spin_unlock_irq(&priv->rtcp_tx.lock);
+
+	ra_sd_parse_rtcp_tx_data(&data, &cmd.data);
 
 	if (copy_to_user(buf, &cmd, sizeof(cmd)))
 		ret = -EFAULT;

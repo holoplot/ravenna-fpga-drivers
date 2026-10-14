@@ -129,6 +129,9 @@ static int ra_sd_probe(struct platform_device *pdev)
 	mutex_init(&priv->rtcp_rx.mutex);
 	mutex_init(&priv->rtcp_tx.mutex);
 
+	spin_lock_init(&priv->rtcp_rx.lock);
+	spin_lock_init(&priv->rtcp_tx.lock);
+
 	init_waitqueue_head(&priv->rtcp_rx.wait);
 	init_waitqueue_head(&priv->rtcp_tx.wait);
 

@@ -43,6 +43,7 @@ struct ra_sd_priv {
 	struct {
 		wait_queue_head_t		wait;
 		struct mutex			mutex;
+		spinlock_t			lock;	/* protects ready and data */
 		bool				ready;
 		struct ra_sd_rtcp_tx_data_fpga	data;
 	} rtcp_tx;
@@ -50,6 +51,7 @@ struct ra_sd_priv {
 	struct {
 		wait_queue_head_t	wait;
 		struct mutex		mutex;
+		spinlock_t		lock;	/* protects ready and data */
 		bool			ready;
 		struct ra_sd_rtcp_rx_data_fpga	data;
 	} rtcp_rx;
