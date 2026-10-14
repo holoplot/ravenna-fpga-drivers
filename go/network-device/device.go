@@ -101,7 +101,8 @@ func (d *Device) SetUDPFilterPort(port uint16) error {
 }
 
 func (d *Device) ResetCounter() error {
-	return d.writeStringAttribute("counter_reset", "")
+	// One bit per counter, reset all of them
+	return d.writeNumericAttribute("counter_reset", 0xffffffff)
 }
 
 func (d *Device) GetStreamPacketCounter() (uint64, uint64, error) {
