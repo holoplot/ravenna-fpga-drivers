@@ -197,8 +197,9 @@ static int ra_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
 	struct device *dev = priv->dev;
 	struct timespec64 ts;
 	unsigned long flags;
-	int sign = 1, ret, res;
-	u32 val = 0;
+	u64 abs_delta;
+	int sign = 1, ret;
+	u32 val = 0, rem;
 
 	dev_dbg(dev, "%s() delta %lld\n", __func__, delta);
 
@@ -206,21 +207,24 @@ static int ra_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
 		return 0;
 
 	if (delta < 0) {
-		delta *= -1;
+		/* Not -delta, which overflows for S64_MIN */
+		abs_delta = -(u64)delta;
 		sign = -1;
 		val |= RA_PTP_OFFSET_CORRECTION_NEGATIVE;
+	} else {
+		abs_delta = delta;
 	}
 
-	if (delta <= RA_PTP_ADJ_TIME_MAX_OFFSET) {
-		val |= delta;
+	if (abs_delta <= RA_PTP_ADJ_TIME_MAX_OFFSET) {
+		val |= abs_delta;
 
 		spin_lock_irqsave(&priv->lock, flags);
 		ra_ptp_iow(priv, RA_PTP_OFFSET_CORRECTION, val);
 		ra_ptp_cmd(priv, RA_PTP_CMD_APPLY_CLOCK_OFFSET);
 		spin_unlock_irqrestore(&priv->lock, flags);
 
-		dev_dbg(dev, "%s(): PTP hw clock adjust: %c%lld ns (0x%02x)\n",
-			__func__, (sign > 0) ? '+': '-', delta, val);
+		dev_dbg(dev, "%s(): PTP hw clock adjust: %c%llu ns (0x%02x)\n",
+			__func__, (sign > 0) ? '+': '-', abs_delta, val);
 
 		return 0;
 	}
@@ -234,13 +238,15 @@ static int ra_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
 		return ret;
 	}
 
-	res = div_u64(delta, NSEC_PER_SEC);
-	ts.tv_sec  += sign * res;
-	ts.tv_nsec += sign * (delta - (res * NSEC_PER_SEC));
+	ts.tv_sec  += sign * (s64)div_u64_rem(abs_delta, NSEC_PER_SEC, &rem);
+	ts.tv_nsec += sign * (long)rem;
 
 	if (ts.tv_nsec < 0) {
 		ts.tv_sec--;
 		ts.tv_nsec += NSEC_PER_SEC;
+	} else if (ts.tv_nsec >= NSEC_PER_SEC) {
+		ts.tv_sec++;
+		ts.tv_nsec -= NSEC_PER_SEC;
 	}
 
 	ret = ra_ptp_settime(ptp, &ts);
