@@ -74,8 +74,12 @@ int ra_net_dma_probe(struct ra_net_priv *priv) {
 	}
 
 	ret = dma_set_mask_and_coherent(priv->dev, DMA_BIT_MASK(64));
+	if (ret)
+		ret = dma_set_mask_and_coherent(priv->dev, DMA_BIT_MASK(32));
 	if (ret) {
 		dev_err(priv->dev, "DMA mask failed: %d\n", ret);
+		of_node_put(node);
+		return ret;
 	}
 
 	ret = of_address_to_resource(node, 0, &res);
