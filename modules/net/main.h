@@ -12,6 +12,10 @@
 #define RA_NET_TX_SKB_LIST_SIZE	64
 #define RA_NET_TX_TS_LIST_SIZE	64
 
+/* Upper bounds for draining hardware FIFOs, so a stuck status can't hang us */
+#define RA_NET_RX_FLUSH_MAX_PACKETS	512
+#define RA_NET_TX_TS_FLUSH_MAX		256
+
 /* raw timestamp data read from FPGA */
 struct ptp_packet_fpga_timestamp
 {

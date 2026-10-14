@@ -225,7 +225,8 @@ void ra_net_flush_tx_ts(struct ra_net_priv *priv)
 
 	spin_lock_irqsave(&priv->tx_ts.lock, flags);
 
-	for (;;) {
+	/* Interrupts are off here, so don't loop on a status that won't clear */
+	for (i = 0; i < RA_NET_TX_TS_FLUSH_MAX; i++) {
 		struct ptp_packet_fpga_timestamp ts_packet;
 		u32 pp_irqs;
 
@@ -236,6 +237,9 @@ void ra_net_flush_tx_ts(struct ra_net_priv *priv)
 		ra_net_ior_rep(priv, RA_NET_TX_TIMESTAMP_FIFO,
 			       &ts_packet, sizeof(ts_packet));
 	}
+
+	if (i == RA_NET_TX_TS_FLUSH_MAX)
+		dev_warn(priv->dev, "TX timestamp FIFO did not drain\n");
 
 	/* Tx skb list */
 	for (i = 0; i < RA_NET_TX_SKB_LIST_SIZE; i++) {

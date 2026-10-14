@@ -161,10 +161,16 @@ static int ra_net_init(struct net_device *ndev)
 	return 0;
 }
 
-/* Drain the RX FIFO, consuming each packet exactly as the receive path does */
+/*
+ * Drain the RX FIFO, consuming each packet exactly as the receive path does.
+ * Bounded, as packets keep arriving while the link is up. Whole packets are
+ * consumed, so anything left is picked up normally later.
+ */
 static void ra_net_flush_rx_fifo(struct ra_net_priv *priv)
 {
-	for (;;) {
+	int i;
+
+	for (i = 0; i < RA_NET_RX_FLUSH_MAX_PACKETS; i++) {
 		u32 status = ra_net_ior(priv, RA_NET_RX_STATE);
 		u32 pkt_len = status & RA_NET_RX_STATE_PACKET_LEN_MASK;
 		u32 words;
