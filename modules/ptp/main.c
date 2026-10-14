@@ -490,7 +490,6 @@ static int ra_ptp_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	spin_lock_init(&priv->lock);
-	dev_set_drvdata(dev, priv);
 	dev->platform_data = priv;
 	priv->dev = dev;
 
