@@ -118,6 +118,9 @@ static int ra_sync_probe(struct platform_device *pdev)
 		return PTR_ERR(priv->regmap);
 
 	irq = of_irq_get(dev->of_node, 0);
+	if (irq <= 0)
+		return dev_err_probe(dev, irq ?: -ENXIO, "Failed to get IRQ\n");
+
 	ret = devm_request_irq(dev, irq, ra_sync_irqhandler, IRQF_SHARED,
 			       dev_name(dev), priv);
 	if (ret < 0) {

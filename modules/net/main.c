@@ -564,6 +564,10 @@ static int ra_net_drv_probe(struct platform_device *pdev)
 	ra_net_pp_irq_disable(priv, ~0);
 
 	irq = of_irq_get_byname(node, "pp");
+	if (irq <= 0)
+		return dev_err_probe(dev, irq ?: -ENXIO,
+				     "Failed to get \"pp\" IRQ\n");
+
 	ret = devm_request_irq(dev, irq, ra_net_irqhandler, IRQF_SHARED,
 			       dev_name(dev), priv);
 	if (ret < 0) {

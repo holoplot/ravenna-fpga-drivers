@@ -167,10 +167,8 @@ static int ra_irq_drv_probe(struct platform_device *pdev)
 		 &res->start, priv->width);
 
 	irq = of_irq_get(dev->of_node, 0);
-	if (irq < 0) {
-		dev_err(dev, "Failed to get IRQ: %d\n", irq);
-		return irq;
-	}
+	if (irq <= 0)
+		return dev_err_probe(dev, irq ?: -ENXIO, "Failed to get IRQ\n");
 
 	/* initially disable all IRQ sources */
 	ra_irq_iow(priv, RA_IRQ_MASK_REG, ~0);

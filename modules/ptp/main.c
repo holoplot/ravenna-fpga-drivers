@@ -549,6 +549,9 @@ static int ra_ptp_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, priv->ptp_clock);
 
 	irq = of_irq_get(node, 0);
+	if (irq <= 0)
+		return dev_err_probe(dev, irq ?: -ENXIO, "Failed to get IRQ\n");
+
 	ret = devm_request_irq(dev, irq, ra_ptp_irqhandler, IRQF_SHARED,
 			       dev_name(dev), priv);
 	if (ret < 0) {
